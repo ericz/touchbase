@@ -5,7 +5,7 @@ var rest = require('restler');
 var express = require('express');
 var sys = require('sys'); 
 
-var SEARCH_FROM = 'June 20, 2012';
+var SEARCH_FROM = 'April 20, 2012';
 
 var login = function(username, password) {
   return new ImapConnection({
@@ -33,28 +33,38 @@ var scrapeEmails = function (email, pw, userId){
         console.log("Error: Unable to fetch chat box because IMAP not enabled");
       }
     }
-    else if (next < cmds.length)
+    else if (next < cmds.length) {
       cmds[next++].apply(this, Array.prototype.slice.call(arguments).slice(1));
+    } else {
+      imap.logout();
+    }
   };
 
-  var msgs = {};
 
   cmds = [
     function() { imap.connect(cb); },
-    //function() { imap.getBoxes(function(x, y) {console.log(y)})},
     function() { imap.openBox("\[Gmail\]/Sent\ Mail", false, cb); },
-    function(result) { box = result; imap.search([ 'ALL', ['SINCE', SEARCH_FROM] ], cb); },
+    function(result) { 
+      var box = result; 
+      imap.search([ 'ALL', ['SINCE', SEARCH_FROM] ], cb); 
+    },
     function(results) {
       var isChat = false;
       fetchBox(results, isChat);
     },
-    function() { imap.openBox("\[Gmail\]/Chats", false, cb); },
-    function(result) { box = result; imap.search([ 'ALL', ['SINCE', SEARCH_FROM] ], cb); },
+    function() { 
+      imap.openBox("\[Gmail\]/Chats", false, cb); 
+    },
+    function(result) { 
+      var box = result; 
+      imap.search([ 'ALL', ['SINCE', SEARCH_FROM] ], cb); 
+    },
     function(results) {
       fetchBox(results, true);
     }
   ];
   var fetchBox = function(results, isChat) {
+    var msgs = {};
     var fetchHeaders = imap.fetch( results, { request: { headers: ['from', 'to', 'subject', 'date'] } });
     fetchHeaders.on('message', function(msg) {
       msg.on('end', function() {
@@ -83,7 +93,6 @@ var scrapeEmails = function (email, pw, userId){
         });
       });
       fetch.on('end', function() {
-        console.log('Done fetching sent emails!');
         processSentMail(msgs, email, userId, isChat);
         cb();
       });
@@ -106,28 +115,55 @@ var trimName = function(to) {
 var processSentMail = function(data, email, userId, isChat) {
   var processedData = [];
   var datum, curData;
-  for (var i in data) {
-    curData = data[i];
-    var people = curData.headers.to[0].split(", ");
-    for ( var j in people ) {
-      datum = {
-        fetchSeqNum: curData.seqno,
-        date: curData.date,
-        gmailId: curData.id,
-        flags: curData.flags,
-        from: curData.headers.from,
-        subject: curData.headers.subject,
-        to: trimName(people[j]),
-        people: people,
-        body: curData.body,
-        email: email,
-        isChat: isChat
+  if( !isChat) {
+    for (var i in data) {
+      curData = data[i];
+      var people = curData.headers.to[0].split(", ");
+      for ( var j in people ) {
+        datum = {
+          fetchSeqNum: curData.seqno,
+          date: curData.date,
+          gmailId: curData.id,
+          flags: curData.flags,
+          from: curData.headers.from,
+          subject: curData.headers.subject,
+          to: trimName(people[j]),
+          people: people,
+          body: curData.body,
+          email: email,
+          isChat: isChat
+        }
+        processedData.push(datum);
       }
-      processedData.push(datum);
-      console.log(datum);
     }
+    postToMongo(processedData, userId);
+  } else {
+    for (var i in data) {
+      curData = data[i];
+      var people = curData.headers.from[0].split(", ");
+      for ( var j in people ) {
+        datum = {
+          fetchSeqNum: curData.seqno,
+          date: curData.date,
+          gmailId: curData.id,
+          flags: curData.flags,
+          from: curData.headers.from,
+          subject: curData.headers.subject,
+          to: trimName(people[j]),
+          people: people,
+          body: curData.body,
+          email: email,
+          isChat: isChat
+        }
+        processedData.push(datum);
+        console.log(datum.subject);
+        if( datum.isChat) {
+          console.log(datum);
+        }
+      }
+    }
+    postToMongo(processedData, userId);
   }
-  postToMongo(processedData, userId);
 };
 
 var postToMongo = function (data, userId) {
@@ -143,7 +179,6 @@ var app = express.createServer();
 app.use(express.bodyParser());
 
 // GET used for testing
-/*
 app.get('/start', function (req, res) {
   var email = req.query.google_email;
   var pw = req.query.google_password;
@@ -151,17 +186,17 @@ app.get('/start', function (req, res) {
   scrapeEmails(email, pw, userId);
 
   res.send({status: 'ok'});
-});*/
+});
 
 
 
 app.post('/start', function (req, res) {
-var email = req.body.google_email;
-var pw = req.body.google_password;
-var userId = req.body.userId;
-scrapeEmails(email, pw, userId);
+  var email = req.body.google_email;
+  var pw = req.body.google_password;
+  var userId = req.body.userId;
+  scrapeEmails(email, pw, userId);
 
-res.send({status: 'ok'});
+  res.send({status: 'ok'});
 });
 app.listen(9001);
 
