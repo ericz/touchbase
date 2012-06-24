@@ -82,6 +82,7 @@ app.post('/:user/addData' , function(req, res){
   
     var setcontact = function(err, doc){
       datum.contactid = doc._id.toString();
+      datum.userid = req.params.user;
       toInsert.push(datum);
       cb();
     };
