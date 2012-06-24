@@ -80,7 +80,6 @@ app.post('/:user/addData' , function(req, res){
   console.log(data.length, 'items');
   async.forEach(data, function(datum, cb){
     var setcontact = function(err, doc){
-      console.log(0);
       if(doc != null) {
         datum.contactid = doc._id.toString();
         datum.userid = req.params.user;
@@ -91,6 +90,7 @@ app.post('/:user/addData' , function(req, res){
     if(datum.type === 'gmail') {
       db.collection('contacts').findOne({userid: req.params.user, email: datum.to}, setcontact);
     } else if (datum.type === 'call') {
+      console.log({userid: req.params.user, phone: datum.phone});
       db.collection('contacts').findOne({userid: req.params.user, phone: datum.phone}, setcontact);
     } else if (datum.type === 'text') {
       db.collection('contacts').findOne({userid: req.params.user, phone: datum.phone}, setcontact);
