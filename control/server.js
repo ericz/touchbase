@@ -2,7 +2,7 @@ var fs = require('fs');
 var express = require('express');
 var app =  express.createServer();
 var mongo = require('mongoskin');
-var db = mongo.db('localhost:27017/angelhack');
+var db = mongo.db('writebetterwith.us:27017/angelhack');
 var Contacts = db.collection('contacts');
 var async = require('async');
 var rapportive = require('./rapportive')
@@ -115,11 +115,6 @@ app.post('/:user/addData' , function(req, res){
   })
 });
 
-app.get('/:user/getTopFriends' , function (req, res) {
-  
-
-})
-
 app.get('/:user/find' , function (req, res) {
   var userid = req.params.user;
   var query = req.body.data;
@@ -132,12 +127,12 @@ app.get('/:user/find' , function (req, res) {
 app.post('/:user/follow', function (req, res) {
   var toInsert = [] 
   var userid = req.params.user
-  for ( var i = 0 , ii = req.body.data.length; i < ii ; i = i + 1) {
-    var contact = req.body.data[i]
+  for ( var i = 0 , ii = req.body.length; i < ii ; i = i + 1) {
+    var contact = req.body[i]
     var contactid = contact['_id'].toString()
     toInsert.push(contactid)
   }
-  db.collection('following').update({userid : userid}, { contacts : { $each : toInsert } } ,{upsert : true} ,function (err, result) {
+  db.collection('following').update({userid : userid}, { $addToSet : {contacts : {$each : toInsert } } } ,{upsert : true} ,function (err, result) {
     if (err) {throw err; }
     res.send({"status" : "ok"})  
   }) 
