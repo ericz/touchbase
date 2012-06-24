@@ -69,7 +69,7 @@ app.post('/:user/addData' , function(req, res){
   var toInsert = []
   for (var i = 0 , ii = data.length ; i < ii ; i = i + 1){
     var datum = data[i];
-    datum['date'] = new Date(data['date'])
+    datum['date'] = new Date(datum['date'])
     datum['userid'] = userid
     toInsert.push(datum)
   }
