@@ -1,0 +1,22 @@
+{
+  "author": "",
+  "name": "AcademyReady",
+  "version": "0.0.0",
+  "repository": {
+    "url": ""
+  },
+  "engines": {
+    "node": "~0.6.11"
+  },
+  "dependencies": {
+    "express" : "~2.5.9",
+    "ejs" : "~0.7",
+    "mongoskin" : "~0.3",
+    "nodemailer" : "~0.3",
+    "node_hash" : "~0.2",
+    "async" : "~0.1",
+    "cron" : "~0.3"
+  },
+  "devDependencies": {},
+  "optionalDependencies": {}
+}
