@@ -10,29 +10,30 @@ app.use(express.bodyParser());
 
 
 var mergeOrInsert = function (contactInfo) {
+  
   var phoneQuery = {phones : {$in : contactInfo.phones} }
   var emailQuery = {emails : {$in: contactInfo.emails} } 
-  var urlQuery = {urls: {$in: contactInfo.urls} }
-  var query = {$and : [ {userid : contactInfo.userid} , {$or : [  phoneQuery , emailQuery , urlQuery  ] } ] }
-  //var query = {$and : [ {userid : contactInfo.userid} , phoneQuery  ] }
+  
+  var query = {$and : [ {userid : contactInfo.userid} , {$or : [  phoneQuery , emailQuery  ] } ] }
+  
   Contacts.findOne( query , function (err, result){
-    if (err) {throw err }
-    console.log(result)
+    if (err) {
+      throw err
+    }
+    
     if (result){
       //update or merge the user
-      var update = { phones : { $each : contactInfo.phones } , emails : { $each : contactInfo.emails }  ,  urls : { $each : contactInfo.urls }  } 
+      var update = { phones : { $each : contactInfo.phones } , emails : { $each : contactInfo.emails } } 
       if (contactInfo.fbid) {
         Contacts.updateById( result['_id'].toString() , { $addToSet : update , $set : {fbid : contactInfo.fbid } }, function(err, result) {
           if (err) {throw err}
         })
-      }
-      else {
+      } else {
         Contacts.updateById( result['_id'].toString() , { $addToSet : update }, function(err, result) {
           if (err) {throw err}
         })
       }
-    }
-    else{
+    } else{
       Contacts.insert( contactInfo, function(err, result){
         if (err) { throw err }
       })
@@ -41,73 +42,46 @@ var mergeOrInsert = function (contactInfo) {
 }
 
 app.post('/:user/addContact', function(req, res){
-  var contactInfo;
-  if (Array.isArray(req.body)){
-    console.log(req.body.length)
-    for ( var i = 0 , ii = req.body.length ; i < ii ; i = i + 1){
-      contactInfo = req.body[i]
+  db.collection('users').findById(req.params.user, function(err, user) {
+    if(err || !user) {
+      res.send({error: "Invalid userid"});
+      return;
+    }
+    req.body.forEach(function(contactInfo){
       contactInfo.userid = req.params.user
-      if ( ! contactInfo.fbid ){
-        contactInfo.fbid = null
-      }
+      
       if (! contactInfo.phones){
         contactInfo.phones = []
       }
-      if (! contactInfo.urls) {
-        contactInfo.urls = []
-      }
-      if (! contactInfo.emails) {
-        if (contactInfo.fbid){
-          db.collection('fb_emails').findOne({fbid : contactInfo.fbid} , function(err, result){
-            if (err) { throw err }
-            if (result){
-              console.log('jkahfkjashdfjkasdhfakjsdhfakjsdhfaskd')
-              contactInfo.emails = [result.email]
-              mergeOrInsert(contactInfo)
+      
+      if (! contactInfo.emails && contactInfo.fbid) {
+        db.collection('fb_emails').findOne({fbid : contactInfo.fbid} , function(err, result){
+          if (result){
+            contactInfo.emails = [result.email]          
+          } else {
+            contactInfo.emails = []
+          }
+          mergeOrInsert(contactInfo)
+        })
+      } else {        
+        async.forEach(contactInfo.emails, function(email, callback){
+          rapportive.getFromGraph(user.fb_token, email, function (result) {  
+            if (result) {
+              contactInfo.fbid = result;
+              db.collection('fb_emails').update({fbid : result} , {fbid : result , email : email}, {upsert : true}, function (err, result) {
+                console.log('cb called')
+                if (err) {throw err}
+              })
+              callback(null);
             }
-            else {
-              contactInfo.emails = []
-              mergeOrInsert(contactInfo)
-            }
-          })
-        } else {
-	}
-      } 
-      else{
-       	var length = contactInfo.emails.length; 
-	var count = 0;
-        for (var j = 0 , jj = contactInfo.emails.length; j < jj; j = j + 1){
-          var email = contactInfo.emails[j] 
-          console.log('111111111111111');
-          
-          (function(e, c, i){
-	    rapportive.getFromGraph(e, function (result) {
-              
-              if (result) {
-                i.fbid = result
-                db.collection('fb_emails').update({fbid : result} , {fbid : result , email : e}, {upsert : true}, function (err, result) {
-                  console.log('cb called')
-                  if (err) {throw err}
-                })
-              }
-	      c++;
-		console.log(c,length);
-	      if (c >= length) {
-		console.log("merge",i);
-	        mergeOrInsert(i)
-	      }
-            })
-          })(email, count, contactInfo);
-        }
+          });
+        }, function(){
+          mergeOrInsert(contactInfo)
+        }) 
       }
-    }
-  }
-  else{
-    contactInfo = req.body;
-    contactInfo.userid = req.params.user
-    mergeOrInsert(contactInfo)
-  }
-  res.send({"status": "ok"})
+    });
+    res.send({"status": "ok"})
+  });
 });
 
 app.post('/:user/addData' , function(req, res){
@@ -123,8 +97,8 @@ app.post('/:user/addData' , function(req, res){
   }
   db.collection(collectionType).insert(toInsert, function(err, result){
     if (err) { throw err; }
+    res.send({"status" : "ok"})
   })
-  res.send({"status" : "ok"})
 });
 
 
