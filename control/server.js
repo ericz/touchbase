@@ -81,6 +81,7 @@ app.post('/:user/addData' , function(req, res){
   console.log(data[0]);
   async.forEach(data, function(datum, cb){
     var setcontact = function(err, doc){
+    console.log(doc);
       if(doc != null) {
         datum.contactid = doc._id.toString();
         datum.userid = req.params.user;
