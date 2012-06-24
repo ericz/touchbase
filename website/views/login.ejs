@@ -1,0 +1,22 @@
+<div id="bg-alt">
+  <a href="/" id="header"><img src="/images/logo.png"></a>
+  <div id="main-alt" class="main-small">
+    
+    <h1>Manage your account</h1>
+    <div class="warning small"><% if(locals.message) { %> <%=message%> <% } %></div>
+    
+    <form action="/login" method="POST" id="loginform">
+      <input type="text" name="email" placeholder="Email" <% if(locals.email) { %>value="<%=email%>"<% } %>>
+      <br>
+      <input type="password" name="password" placeholder="Password">
+      <div id="submit" class="button smallbtn bluebtn">Sign In</div>
+      <div class="small"><a href="#" id="forgot">Forgot my password</a></div>
+      <input type="submit" class="hide">
+    </form>
+    
+  </div>
+  <div id="bottombanner">
+    <h1>New to TouchBase?</h1>
+    <a href="/register" class="button longsmallbtn greenbtn">Create an Account</a>
+  </div>
+</div>

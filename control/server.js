@@ -2,7 +2,7 @@ var fs = require('fs');
 var express = require('express');
 var app =  express.createServer();
 var mongo = require('mongoskin');
-var db = mongo.db('10.66.225.38:27017/angelhack?auto_reconnect');
+var db = mongo.db('localhost:27017/angelhack');
 var Contacts = db.collection('contacts');
 // Initialize main server
 app.use(express.bodyParser());
@@ -44,19 +44,40 @@ var mergeOrInsert = function (contactInfo) {
   });
 }
 
-app.post('/', function(req, res){
+app.post('/:user/addContact', function(req, res){
   var contactInfo;
   console.log(req.body)
   if (Array.isArray(req.body)){
     for ( var i = 0 , ii = req.body.length ; i < ii ; i = i + 1){
       contactInfo = req.body[i];
+      contactInfo.userid = req.params.user
       mergeOrInsert(contactInfo);
     }
   }
   else{
     contactInfo = req.body;
-    mergeOrInsert(contactInfo);
+    contactInfo.userid = req.params.user
+    mergeOrInsert(contactInfo); 
   }
+  res.send(" ");
 });
+
+app.post('/:user/addData' , function(req, res){
+  var collectionType = req.body.type
+  var userid = req.params.user
+  var data = req.body.data
+  var toInsert = []
+  for (var i = 0 , ii = data.length ; i < ii ; i = i + 1){
+    var datum = data[i];
+    datum['date'] = new Date(data['date'])
+    datum['userid'] = userid
+    toInsert.push(datum)
+  }
+  db.collection(collectionType).insert(toInsert, function(err, result){
+    if (err) { throw err; }
+  })
+  res.send()
+});
+
 
 app.listen(9000);
