@@ -1,0 +1,29 @@
+<div id="top">
+  <a href="/" id="header"><img src="/images/logo.png"></a>
+  <div class="text">A CRM for your personal life</div>
+  <% if(!session.user) { %>
+  <a id="signup" href="/register" class="button bigbtn greenbtn">Get Started</a>
+  <% } else { %>
+  <a id="gotodash" href="/dashboard" class="button bigbtn bluebtn">Go to Dashboard</a>
+  <% } %>
+  <div class="text">Free</div>
+</div>
+<div id="main">
+ <!-- <ul id="menu">
+    <li>Pricing + Details</li>
+    <li>Sign Up</li>
+  </ul>-->
+  <!--<div id="panewrap">
+    <div id="rightpane">
+      <div class="paneitem"><img src="/images/1.png"></div>
+      <div class="paneitem"><img src="/images/2.png"></div>
+      <div class="paneitem"><img src="/images/3.png"></div>
+    </div>
+    <div id="leftpane">
+      <div class="paneitem">Generate schedules for online courses</div>
+      <div class="paneitem">Get sent email and text reminders</div>
+      <div class="paneitem">Automatically track progress</div>
+    </div>
+  </div>-->
+
+</div>

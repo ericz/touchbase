@@ -1,0 +1,28 @@
+<div id="bg-alt">
+  <a href="/dashboard" id="header"><img src="/images/logo.png"></a>
+  <div id="main-alt" class="main-small">
+    
+    <h1>Account settings</h1>
+    <div class="warning small"><% if(locals.message) { %> <%=message%> <% } %></div>
+    
+    <form action="/settings" method="POST" id="settingsform">
+      <input type="text" name="email" placeholder="Email" <% if(locals.email) { %>value="<%=email%>"<% } %>>
+      <p>Facebook credentials</p>
+      <br>
+      <div class="small" id="fbtoken"><% if(locals.fb_token) { %><%=locals.fb_token%><% } else { %><a href="https://www.facebook.com/dialog/oauth?client_id=254026524706355&redirect_uri=http://writebetterwith.us/settings&scope=read_mailbox,email"><img src="/images/fb.gif"></a><% } %></div>
+      <p>Google credentials</p>
+      <input type="text" name="google_email" placeholder="Google username" <% if(locals.google_email) { %>value="<%=google_email%>"<% } %>>
+      <br>
+      <input type="password" name="google_password" placeholder="Google password">
+      
+      <p>Change your password</p>
+      <input type="password" name="password" placeholder="Old password">
+      <br>
+      <input type="password" name="newpassword" placeholder="New password">
+      <br>
+      <input type="password" name="confirmpassword" placeholder="Confirm new password">
+      <div id="submit" class="button smallbtn bluebtn">Save</div>
+      <input type="submit" class="hide">
+    </form>
+  </div>
+</div>
