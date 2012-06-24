@@ -1,3 +1,6 @@
+var GOOGLE_URL = 'http://writebetterwith.us:9001/start';
+var FB_URL = 'http://writebetterwith.us:9002/start';
+
 var express = require('express');
 var fs = require('fs');
 var form = require('express-form'),
@@ -76,6 +79,11 @@ app.get('/settings', loggedIn, function(req, res){
       if (!(result instanceof Error)){
         result = qs.parse(result);
         Users.updateById(req.session.user._id, {$set: {fb_token: result.access_token}});
+        
+        if(req.session.user.fb_token !== result.access_token) {
+          restler.postJson(FB_URL, {userId: req.session.user._id, access_token: result.access_token});
+        }
+        
         req.session.user.fb_token = result.access_token;
         complete();
       }
@@ -128,7 +136,7 @@ app.post('/remoteLogin',
     }
     Users.findOne({email: req.form.email}, function(err, doc){
       if(!doc || hash.sha256(req.form.password, doc.salt) !== doc.password) {
-        res.render({message: 'Incorrect email and password combination'});
+        res.send({message: 'Incorrect email and password combination'});
       } else {
         res.send({userId: doc._id.toString()});
       }
@@ -206,6 +214,11 @@ app.post('/settings',
       return;
     }
     var insert = {google_email: req.form.google_email, google_password: req.form.google_password};
+   
+    if(req.session.user.google_email !== insert.google_email || req.session.user.google_password !== insert.google_password) {
+      // Start google scraper
+      restler.postJson(GOOG_URL, {userId: req.session.user._id, google_email: req.form.google_email, google_password: req.form.google_password});
+    }
    
     if ((req.form.password || req.form.newpassword || req.form.confirmpassword) && req.form.newpassword.length > 0) {
       if (req.session.user.password === hash.sha256(req.form.password, req.session.user.salt)){
