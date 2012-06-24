@@ -54,9 +54,19 @@ var mergeOrInsert = function (contactInfo) {
   })
 }
 */
+
+
+app.post('/:user/addFbContact', function(req, res){
+  req.body.forEach(function(contact){
+    contact.userid = req.params.user;
+    db.collection('contacts').insert(contact);
+  });
+  res.send({"status": "ok"})
+});
+
 app.post('/:user/addContact', function(req, res){
   req.body.forEach(function(contact){
-    db.collection('contacts').update({userid: req.params.user, name: contact.name}, contact, {upsert: true});
+    db.collection('contacts').update({userid: req.params.user, name: contact.name}, {$set: {emails: contact.emails, phones: contact.phones}});
   });
   res.send({"status": "ok"})
 });

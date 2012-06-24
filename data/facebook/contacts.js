@@ -12,7 +12,7 @@ app.use(express.bodyParser());
 var get_friends = function (access_token, id, userId) {
     var url = base_url + id + "/friends?access_token=" + access_token;
 
-    var post_url = "http://writebetterwith.us:9000/"+userId+"/addContact";
+    var post_url = "http://writebetterwith.us:9000/"+userId+"/addFbContact";
     rest.get(url).on('complete', function(result) {
       // this can be changed to something more structured,
       // and less dependent on the format of the text
@@ -24,7 +24,7 @@ var get_friends = function (access_token, id, userId) {
 };
 
 app.post("/start", function(req, res) {
-  scrape(req.body.access_token, req.body.id, req.body.userId);
+  get_friends(req.body.access_token, req.body.id, req.body.userId);
   res.send({status: 'ok'});
 });
 app.listen(9005);
