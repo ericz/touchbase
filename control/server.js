@@ -18,6 +18,10 @@ var mergeOrInsert = function (contactInfo) {
    queries.push({fbid : contactInfo.fbid})
   }
   
+  if(contactInfo.name) {
+    queries.push({name: contactInfo.name});
+  }
+  
   var query = {$and : [ {userid : contactInfo.userid} , {$or : queries } ] }
   
   Contacts.findOne( query , function (err, result){
