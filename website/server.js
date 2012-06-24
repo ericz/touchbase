@@ -113,7 +113,7 @@ app.get('/dashboard', loggedIn, function(req, res){
           callback(null);
         },
         fb: function(callback) {
-          Fb.find({userid: id, "people.name": doc.name},  {limit:1, sort:[['date', -1]]}).toArray(callback);
+          Fb.find({userid: id, to: doc.name},  {limit:1, sort:[['date', -1]]}).toArray(callback);
         }
       }, function(err, result){
         doc.last = result
@@ -130,17 +130,33 @@ app.get('/dashboard', loggedIn, function(req, res){
           return 0;
         }
       }
-    
+      var filtered = [];
       for(var i = 0, ii = docs.length; i < ii; i++) {
         var dates = [];
         var doc = docs[i];
         for(var key in doc.last) {
-          dates.push({type: key, date: doc.last[key][0].date});
+          if(doc.last[key] && doc.last[key].length > 0) {
+            dates.push({type: key, date: doc.last[key][0].date});
+          }
         }
-        dates.sort(sortByDate);
-        doc.last = doc.last[dates[0].type][0];
+        if(dates.length > 0) {
+          dates.sort(sortByDate);
+          doc.last = doc.last[dates[0].type][0];
+          filtered.push(doc);
+        }
       }
-      res.render('dashboard', {js: 'dashboard', title: 'Touchbase - Dashboard', docs: docs});
+      
+      filtered.sort(function(a, b){
+        if(a.last.date > b.last.date) {
+          return -1;
+        } else if (a.last.date < b.last.date) {
+          return 1;
+        } else {
+          return 0;
+        }
+      });
+      
+      res.render('dashboard', {js: 'dashboard', title: 'Touchbase - Dashboard', docs: filtered.concat(docs)});
     });
   });
 });
