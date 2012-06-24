@@ -81,7 +81,7 @@ app.post('/:user/addData' , function(req, res){
   console.log(data[0]);
   async.forEach(data, function(datum, cb){
     var setcontact = function(err, doc){
-    console.log(doc);
+    
       if(doc != null) {
         datum.contactid = doc._id.toString();
         datum.userid = req.params.user;
@@ -97,6 +97,7 @@ app.post('/:user/addData' , function(req, res){
     } else if (datum.type === 'text') {
       db.collection('contacts').findOne({userid: req.params.user, phones: datum.phone}, setcontact);
     } else if (datum.type === 'fb') {
+      console.log({userid: req.params.user, fbid: datum.fbid});
       db.collection('contacts').findOne({userid: req.params.user, fbid: datum.fbid}, setcontact);
     } 
   }, function(){
