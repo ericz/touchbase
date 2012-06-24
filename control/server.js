@@ -11,6 +11,11 @@ app.use(express.bodyParser());
 
 
 var mergeOrInsert = function (contactInfo) {
+
+  for(var i in contactInfo.phones) {
+    contactInfo.phones[i] = stripAlphaChars(contactInfo.phones[i]);
+  }
+
   var queries = [];
   queries.push({phones : {$in : contactInfo.phones} })
   queries.push({emails : {$in : contactInfo.emails} })
@@ -139,3 +144,12 @@ app.post('/:user/follow', function (req, res) {
 })
 
 app.listen(9000);
+
+
+function stripAlphaChars(pstrSource) 
+{ 
+var m_strOut = new String(pstrSource); 
+    m_strOut = m_strOut.replace(/[^0-9]/g, ''); 
+
+    return m_strOut; 
+}
