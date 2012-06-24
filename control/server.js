@@ -4,6 +4,7 @@ var app =  express.createServer();
 var mongo = require('mongoskin');
 var db = mongo.db('localhost:27017/angelhack');
 var Contacts = db.collection('contacts');
+var async = require('async');
 var rapportive = require('./rapportive')
 // Initialize main server
 app.use(express.bodyParser());
