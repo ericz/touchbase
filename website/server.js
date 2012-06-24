@@ -11,7 +11,7 @@ var util = require('./lib/util');
 
 var mongo = require('mongoskin');
 var ObjectID = require('mongoskin').ObjectID;
-var db = mongo.db('10.66.225.38:27017/angelhack');
+var db = mongo.db('localhost:27017/angelhack');
 var Users = db.collection('users');
 
 
