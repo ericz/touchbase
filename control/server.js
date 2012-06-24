@@ -13,8 +13,9 @@ var mergeOrInsert = function (contactInfo) {
   
   var phoneQuery = {phones : {$in : contactInfo.phones} }
   var emailQuery = {emails : {$in: contactInfo.emails} } 
+  var fbQuery = {fbid : contactInfo.fbid}
   
-  var query = {$and : [ {userid : contactInfo.userid} , {$or : [  phoneQuery , emailQuery  ] } ] }
+  var query = {$and : [ {userid : contactInfo.userid} , {$or : [  phoneQuery , emailQuery, fbQuery ] } ] }
   
   Contacts.findOne( query , function (err, result){
     if (err) {
@@ -69,7 +70,6 @@ app.post('/:user/addContact', function(req, res){
             if (result) {
               contactInfo.fbid = result;
               db.collection('fb_emails').update({fbid : result} , {fbid : result , email : email}, {upsert : true}, function (err, result) {
-                console.log('cb called')
                 if (err) {throw err}
               })
               callback(null);
