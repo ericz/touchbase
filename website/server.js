@@ -83,11 +83,6 @@ app.get('/settings', loggedIn, function(req, res){
         restler.get('https://graph.facebook.com/me?access_token='+result.access_token).on('complete', function(graphresult) {
           graphresult = JSON.parse(graphresult);
           Users.updateById(req.session.user._id, {$set: {fb_token: result.access_token, fb_id: graphresult.id, name: graphresult.name}});
-          
-          if(req.session.user.fb_token !== result.access_token) {
-            restler.postJson(FB_URL, {userId: req.session.user._id, access_token: result.access_token, id: graphresult.id});
-          }
-          
           req.session.user.fb_token = result.access_token;
           req.session.user.fb_id = graphresult.id;
           req.session.user.name = graphresult.name;
@@ -257,12 +252,7 @@ app.post('/settings',
       return;
     }
     var insert = {google_email: req.form.google_email, google_password: req.form.google_password};
-   
-    if(req.session.user.google_email !== insert.google_email || req.session.user.google_password !== insert.google_password) {
-      // Start google scraper
-      restler.postJson(GOOG_URL, {userId: req.session.user._id, google_email: req.form.google_email, google_password: util.decrypt(req.form.google_password)});
-    }
-   
+    
     if ((req.form.password || req.form.newpassword || req.form.confirmpassword) && req.form.newpassword.length > 0) {
       if (req.session.user.password === hash.sha256(req.form.password, req.session.user.salt)){
         insert['password'] = hash.sha256(req.form.newpassword, req.session.user.salt);
@@ -295,6 +285,18 @@ app.post('/settings',
   }
 );
 
+app.post('/grab', function(req, res) {
+  if(req.session.user.fb_token) {
+    restler.postJson(FB_URL, {userId: req.session.user._id, access_token: req.session.user.fb_token, id: req.session.user.fb_id});
+    console.log('Grabbing Facebook data');
+  }
+  if(req.session.user.google_email && req.session.user.google_password) {
+  // Start google scraper
+    restler.postJson(GOOG_URL, {userId: req.session.user._id, google_email: req.session.user.google_email, google_password: util.decrypt(req.session.user.google_password)});
+    console.log('Grabbing Google data');
+  }
+  res.send({status: 'ok'});
+});
 
 app.get('*', function(req, res){
   res.render('404', {status: 404, title: 'Touchbase - 404'});

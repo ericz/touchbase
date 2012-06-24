@@ -4,6 +4,7 @@ var app =  express.createServer();
 var mongo = require('mongoskin');
 var db = mongo.db('localhost:27017/angelhack');
 var Contacts = db.collection('contacts');
+var async = require('async');
 var rapportive = require('./rapportive')
 // Initialize main server
 app.use(express.bodyParser());
@@ -13,8 +14,9 @@ var mergeOrInsert = function (contactInfo) {
   
   var phoneQuery = {phones : {$in : contactInfo.phones} }
   var emailQuery = {emails : {$in: contactInfo.emails} } 
+  var fbQuery = {fbid : contactInfo.fbid}
   
-  var query = {$and : [ {userid : contactInfo.userid} , {$or : [  phoneQuery , emailQuery  ] } ] }
+  var query = {$and : [ {userid : contactInfo.userid} , {$or : [  phoneQuery , emailQuery, fbQuery ] } ] }
   
   Contacts.findOne( query , function (err, result){
     if (err) {
@@ -54,7 +56,11 @@ app.post('/:user/addContact', function(req, res){
         contactInfo.phones = []
       }
       
-      if (! contactInfo.emails && contactInfo.fbid) {
+      if (! contactInfo.emails){
+        contactInfo.emails = []
+      }
+      
+      if (contactInfo.emails.length === 0 && contactInfo.fbid) {
         db.collection('fb_emails').findOne({fbid : contactInfo.fbid} , function(err, result){
           if (result){
             contactInfo.emails = [result.email]          
@@ -63,13 +69,13 @@ app.post('/:user/addContact', function(req, res){
           }
           mergeOrInsert(contactInfo)
         })
-      } else {        
+      } else {
+        
         async.forEach(contactInfo.emails, function(email, callback){
           rapportive.getFromGraph(user.fb_token, email, function (result) {  
             if (result) {
               contactInfo.fbid = result;
               db.collection('fb_emails').update({fbid : result} , {fbid : result , email : email}, {upsert : true}, function (err, result) {
-                console.log('cb called')
                 if (err) {throw err}
               })
               callback(null);
