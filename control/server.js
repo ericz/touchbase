@@ -8,7 +8,7 @@ var async = require('async');
 var rapportive = require('./rapportive')
 // Initialize main server
 app.use(express.bodyParser());
-
+/*
 
 var mergeOrInsert = function (contactInfo) {
 
@@ -53,59 +53,43 @@ var mergeOrInsert = function (contactInfo) {
     }
   })
 }
-
+*/
 app.post('/:user/addContact', function(req, res){
-  db.collection('users').findById(req.params.user, function(err, user) {
-    if(err || !user) {
-      res.send({error: "Invalid userid"});
-      return;
-    }
-    req.body.forEach(function(contactInfo){
-      contactInfo.userid = req.params.user
-      
-      if (! contactInfo.phones){
-        contactInfo.phones = []
-      }
-      
-      if (! contactInfo.emails){
-        contactInfo.emails = []
-      }
-      
-      if (contactInfo.emails.length === 0 && contactInfo.fbid) {
-        db.collection('fb_emails').findOne({fbid : contactInfo.fbid} , function(err, result){
-          if (result){
-            contactInfo.emails = [result.email]          
-          } else {
-            contactInfo.emails = []
-          }
-          mergeOrInsert(contactInfo)
-        })
-      } else {
-        async.forEach(contactInfo.emails, function(email, callback){
-          rapportive.getFromGraph(user.fb_token, email, function (result) {  
-            if (result) {
-              contactInfo.fbid = result;
-              db.collection('fb_emails').update({fbid : result} , {fbid : result , email : email}, {upsert : true}, function (err, result) {
-                if (err) {throw err}
-                callback(null);
-              })
-            } else {
-              callback(null);
-            }
-          });
-        }, function(){
-          mergeOrInsert(contactInfo)
-        }) 
-      }
-    });
-    res.send({"status": "ok"})
+  req.body.forEach(function(contact){
+    db.collection('contacts').update({userid: req.params.user, name: contact.name}, contact, {upsert: true});
   });
+  res.send({"status": "ok"})
 });
 
 app.post('/:user/addData' , function(req, res){
   var collectionType = req.body.type
   var userid = req.params.user
   var data = req.body.data
+  
+  var toInsert = [];
+  
+  async.forEach(data, function(datum, cb){
+  
+    var setcontact = function(err, doc){
+      datum.contactid = doc._id.toString();
+      toInsert.push(datum);
+      cb();
+    };
+    if(datum.type === 'gmail') {
+      db.collection('contacts').findOne({userid: req.params.user, email: datum.to}, setcontact);
+    } else if (datum.type === 'call') {
+      db.collection('contacts').findOne({userid: req.params.user, phone: datum.phone}, setcontact);
+    } else if (datum.type === 'text') {
+      db.collection('contacts').findOne({userid: req.params.user, phone: datum.phone}, setcontact);
+    } else if (datum.type === 'fb') {
+      db.collection('contacts').findOne({userid: req.params.user, fbid: datum.fbid}, setcontact);
+    } 
+  }, function(){
+    db.collection('data').insert(toInsert);
+    res.send({"status": "ok"})
+  });
+  
+  /*
   var toInsert = []
   for (var i = 0 , ii = data.length ; i < ii ; i = i + 1){
     var datum = data[i];
@@ -116,9 +100,9 @@ app.post('/:user/addData' , function(req, res){
   db.collection(collectionType).insert(toInsert, function(err, result){
     if (err) { throw err; }
     res.send({"status" : "ok"})
-  })
+  })*/
 });
-
+/*
 app.get('/:user/find' , function (req, res) {
   var userid = req.params.user;
   var query = req.body.data;
@@ -142,7 +126,7 @@ app.post('/:user/follow', function (req, res) {
   }) 
 
 })
-
+*/
 app.listen(9000);
 
 
