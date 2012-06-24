@@ -58,7 +58,7 @@ module.exports = {
   
   decrypt: function(text) {
     var decipher = crypto.createDecipher(algorithm, key);
-    var decrypted = decipher.update(encrypted, 'hex', 'utf8') + decipher.final('utf8');
+    var decrypted = decipher.update(text, 'hex', 'utf8') + decipher.final('utf8');
     return decrypted;
   }
 }
