@@ -109,7 +109,7 @@ app.get('/dashboard', loggedIn, function(req, res){
           Texts.find({userid: id, phone: {$in: doc.phones}},  {limit:1, sort:[['date', -1]]}).toArray(callback);
         },
         gmail: function(callback) {
-          //Gmail.find({userid: id, phone: {$in: doc.phones}},  {limit:1, sort:[['date', -1]]}).toArray(callback);
+          Gmail.find({userid: id, to: {$in: doc.emails}},  {limit:1, sort:[['date', -1]]}).toArray(callback);
           callback(null);
         },
         fb: function(callback) {
