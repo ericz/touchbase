@@ -88,12 +88,12 @@ app.post('/:user/addData' , function(req, res){
       cb(null);
     };
     if(datum.type === 'gmail') {
-      db.collection('contacts').findOne({userid: req.params.user, email: datum.to}, setcontact);
+      db.collection('contacts').findOne({userid: req.params.user, emails: datum.to}, setcontact);
     } else if (datum.type === 'call') {
       console.log({userid: req.params.user, phone: datum.phone});
-      db.collection('contacts').findOne({userid: req.params.user, phone: datum.phone}, setcontact);
+      db.collection('contacts').findOne({userid: req.params.user, phones: datum.phone}, setcontact);
     } else if (datum.type === 'text') {
-      db.collection('contacts').findOne({userid: req.params.user, phone: datum.phone}, setcontact);
+      db.collection('contacts').findOne({userid: req.params.user, phones: datum.phone}, setcontact);
     } else if (datum.type === 'fb') {
       db.collection('contacts').findOne({userid: req.params.user, fbid: datum.fbid}, setcontact);
     } 
