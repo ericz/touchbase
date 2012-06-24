@@ -2,9 +2,9 @@ var http = require("http");
 var rest = require("restler");
 var express = require("express"); 
 
-var access_token = "AAACEdEose0cBAFcf8rAVyrrUXYNhq6G4ymLBoiEZAkf8vSH2fpx1LMNekK3dnsaFnVLlOJnehHmmdHCjnMp5P8X8HkVZABHN0OM9KhCoGRsGoayYWN";
+var access_token = "AAACEdEose0cBAEPvY9v9qtbG1P8v3ZCpejsxqrBycp2RBVEy1ZA8iPqQ6w3OE5eu0MSti49PZBYFd9MTqwZCykwqdmNZAAa9VcsQt0TAzkdZCZCPDxNqUjU";
 
-var id = "taylor.nebel";
+var id = "100000786426747";
 var userId = "something";
 
 // access_token:
@@ -16,17 +16,6 @@ var base_url = "https://graph.facebook.com/";
 var post_url = "http://writebetterwith.us:9000/:userid/addContact";
 
 var app = express.createServer();
-
-var get_email = function(access_token, id, userId, res) {
-    /*
-    var url = base_url + id + "?access_token=" + access_token;
-    
-    rest.get(url).on('complete', function(result) {
-        result = JSON.parse(result);
-        console.log(result["email"]);
-    });
-    */
-};
 
 var get_friends = function (access_token, id, userId, res) {
     var url = base_url + id + "/friends?access_token=" + access_token;
@@ -51,10 +40,8 @@ var parse_result = function(id, result, userId) {
     var data = [];
     for ( var i = 0; i < result.data.length; ++i ) {
         var conv = result.data[i];
-        //console.log("CONV",JSON.stringify(conv));
         var people = conv.to.data;
         // check for case where the next data element doesn't have comments element
-        //
         if (!conv.comments) {
             //console.log(conv.to.data);
             continue;
@@ -92,7 +79,6 @@ var get_messages = function(access_token, id, userId, res) {
 
 var scrape = function(access_token, id, userId, res) {
     get_friends(access_token, id, userId, res);
-    get_email(access_token, id, userId, res);
     get_messages(access_token, id, userId, res);
 };
 
@@ -105,7 +91,9 @@ var postToMongo = function (data, id) {
     });
 };
 
-app.get("/get/:user/:token", function(req, res) {
+app.get("/get/:access_token/:id/:userId", function(req, res) {
+    //console.log(req.params);
     scrape(access_token, id, userId, res);
+    //scrape(req.params[0], req.params[1], req.params[2], res);
 });
 app.listen(8888);
