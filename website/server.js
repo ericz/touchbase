@@ -78,14 +78,18 @@ app.get('/settings', loggedIn, function(req, res){
     restler.get('https://graph.facebook.com/oauth/access_token?client_id=254026524706355&redirect_uri=http://writebetterwith.us/settings&client_secret=65c4a1c6aa3fd9bc22872f5157244872&code='+code).on('complete', function(result) {
       if (!(result instanceof Error)){
         result = qs.parse(result);
-        Users.updateById(req.session.user._id, {$set: {fb_token: result.access_token}});
-        
-        if(req.session.user.fb_token !== result.access_token) {
-          restler.postJson(FB_URL, {userId: req.session.user._id, access_token: result.access_token});
-        }
-        
-        req.session.user.fb_token = result.access_token;
-        complete();
+        restler.get('https://graph.facebook.com/me?access_token='+result.access_token).on('complete', function(graphresult) {
+          Users.updateById(req.session.user._id, {$set: {fb_token: result.access_token, fb_id: graphresult.id, name: graphresult.name}});
+          
+          if(req.session.user.fb_token !== result.access_token) {
+            restler.postJson(FB_URL, {userId: req.session.user._id, access_token: result.access_token, id: graphresult.id});
+          }
+          
+          req.session.user.fb_token = result.access_token;
+          req.session.user.fb_id = graphresult.id;
+          req.session.user.name = graphresult.name;
+          complete();
+        });
       }
     });
   } else {
