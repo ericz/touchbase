@@ -70,14 +70,15 @@ app.post('/:user/addContact', function(req, res){
           mergeOrInsert(contactInfo)
         })
       } else {
-        
         async.forEach(contactInfo.emails, function(email, callback){
           rapportive.getFromGraph(user.fb_token, email, function (result) {  
             if (result) {
               contactInfo.fbid = result;
               db.collection('fb_emails').update({fbid : result} , {fbid : result , email : email}, {upsert : true}, function (err, result) {
                 if (err) {throw err}
+                callback(null);
               })
+            } else {
               callback(null);
             }
           });
