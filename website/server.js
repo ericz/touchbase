@@ -46,7 +46,7 @@ var loggedIn = function(req, res, next) {
 
 
 app.get('/', function(req, res){
-  res.render('index', {title: 'TouchBase'});
+  res.render('index', {title: 'Touchbase'});
 });
 
 app.get('/login', function(req, res){
@@ -54,18 +54,18 @@ app.get('/login', function(req, res){
     res.redirect('/dashboard');
     return;
   }
-  res.render('login', {js: 'login', title: 'TouchBase - Login' });
+  res.render('login', {js: 'login', title: 'Touchbase - Login' });
 });
 
 app.get('/register', function(req, res){
-  res.render('register', {js: 'register', title: 'TouchBase - Sign Up'});
+  res.render('register', {js: 'register', title: 'Touchbase - Sign Up'});
 });
 
 app.get('/settings', loggedIn, function(req, res){
   var complete = function(){
     var locals = req.session.user;
     locals.js = 'settings';
-    locals.title = 'AcademyRead - Settings'
+    locals.title = 'Touchbase - Settings'
     locals.fb_token = req.session.user.fb_token;
     res.render('settings', locals);
   };
@@ -86,7 +86,7 @@ app.get('/settings', loggedIn, function(req, res){
 });
 
 app.get('/dashboard', loggedIn, function(req, res){
-  res.render('dashboard', {js: 'dashboard', title: 'TouchBase - Dashboard'});
+  res.render('dashboard', {js: 'dashboard', title: 'Touchbase - Dashboard'});
 });
 
 app.get('/logout', loggedIn, function(req, res) {
@@ -101,16 +101,36 @@ app.post('/login',
   ), 
   function(req, res) {
     if (!req.form.isValid) {
-      res.render('login', {js: 'login', message: req.form.errors[0], title: 'TouchBase - Login' });
+      res.render('login', {js: 'login', message: req.form.errors[0], title: 'Touchbase - Login' });
       return;
     }
     Users.findOne({email: req.form.email}, function(err, doc){
       if(!doc || hash.sha256(req.form.password, doc.salt) !== doc.password) {
-        res.render('login', {js: 'login', message: 'Incorrect email and password combination', title: 'TouchBase - Login'});
+        res.render('login', {js: 'login', message: 'Incorrect email and password combination', title: 'Touchbase - Login'});
       } else {
         doc._id = doc._id.toString();
         req.session.user = doc;
         res.redirect('/dashboard');
+      }
+    });
+  }
+);
+
+app.post('/remoteLogin', 
+  form(
+    field('email').required('Email', 'Please enter an email').toLower().trim().isEmail('Email address is not valid'), 
+    field('password').required('Password', 'Please enter a password')
+  ), 
+  function(req, res) {
+    if (!req.form.isValid) {
+      res.send({message: req.form.errors[0]});
+      return;
+    }
+    Users.findOne({email: req.form.email}, function(err, doc){
+      if(!doc || hash.sha256(req.form.password, doc.salt) !== doc.password) {
+        res.render({message: 'Incorrect email and password combination'});
+      } else {
+        res.send({userId: doc._id.toString()});
       }
     });
   }
@@ -122,20 +142,20 @@ app.post('/forgot',
   ), 
   function(req, res) {
     if (!req.form.isValid) {
-      res.render('login', {js: 'login', message: req.form.errors[0], title: 'TouchBase - Forgot Your Password?'});
+      res.render('login', {js: 'login', message: req.form.errors[0], title: 'Touchbase - Forgot Your Password?'});
       return;
     }
     Users.findOne({email: req.form.email}, function(err, doc){
       if(!doc) {
-        res.render('login', {js: 'login', message: req.form.email + ' not associated with an account' , title: 'TouchBase - Failed Password Recovery'});
+        res.render('login', {js: 'login', message: req.form.email + ' not associated with an account' , title: 'Touchbase - Failed Password Recovery'});
       } else {
         var salt = util.generateId();
         var newPassword = util.generateId();
-        var html = '<p>Your TouchBase password has been reset</p><p>New password: '+newPassword+'</p><p>Sign in to access your account and change your password: <a href="http://localhost/login">http://localhost/login</a>';
+        var html = '<p>Your Touchbase password has been reset</p><p>New password: '+newPassword+'</p><p>Sign in to access your account and change your password: <a href="http://localhost/login">http://localhost/login</a>';
         var hashed = hash.sha256(newPassword, salt);
         Users.update({email: req.form.email}, {$set: {password: hashed, salt: salt}});
-        res.render('login', {js: 'login', message: 'An email with a new password has been sent' , title: 'TouchBase - Password Reset'});
-        util.email(req.form.email, 'TouchBase Password Reset', html);
+        res.render('login', {js: 'login', message: 'An email with a new password has been sent' , title: 'Touchbase - Password Reset'});
+        util.email(req.form.email, 'Touchbase Password Reset', html);
       }
     });
   }
@@ -148,7 +168,7 @@ app.post('/register',
   ),
   function(req, res) {
     if (!req.form.isValid) {
-      res.render('register', {js: 'register', message: req.form.errors[0], 'title': 'TouchBase - Signed Up!'});
+      res.render('register', {js: 'register', message: req.form.errors[0], 'title': 'Touchbase - Signed Up!'});
       return;
     }
     var user = req.form;
@@ -156,14 +176,14 @@ app.post('/register',
     user.password = hash.sha256(user.password, user.salt);
     Users.insert(user, {safe: true}, function(err, doc){
       if(!doc) {
-        res.render('register', {js: 'register', message: 'Email ' + req.form.email + ' already has an account', 'title': 'TouchBase - Duplicate Email'});
+        res.render('register', {js: 'register', message: 'Email ' + req.form.email + ' already has an account', 'title': 'Touchbase - Duplicate Email'});
       } else {
         doc = doc[0];
         doc._id = doc._id.toString();
         req.session.user = doc;
         res.redirect('/dashboard');
-        var html = '<p>Hi,</p><p>Thanks for signing up for TouchBase!</p><p>Your account is all set up and ready to use. <a href="http://localhost/dashboard">Start now</a>.</p><p>The TouchBase team</p>';
-        util.email(user.email, 'Thanks for using TouchBase', html);
+        var html = '<p>Hi,</p><p>Thanks for signing up for Touchbase!</p><p>Your account is all set up and ready to use. <a href="http://localhost/dashboard">Start now</a>.</p><p>The Touchbase team</p>';
+        util.email(user.email, 'Thanks for using Touchbase', html);
       }
     });
   }
@@ -182,7 +202,7 @@ app.post('/settings',
   loggedIn, 
   function(req, res) {
     if (!req.form.isValid) {
-      res.render('settings', {js: 'settings', message: req.form.errors[0], 'title': 'TouchBase - Settings'});
+      res.render('settings', {js: 'settings', message: req.form.errors[0], 'title': 'Touchbase - Settings'});
       return;
     }
     var insert = {google_email: req.form.google_email, google_password: req.form.google_password};
@@ -191,7 +211,7 @@ app.post('/settings',
       if (req.session.user.password === hash.sha256(req.form.password, req.session.user.salt)){
         insert['password'] = hash.sha256(req.form.newpassword, req.session.user.salt);
       } else {
-        res.render('settings', {js: 'settings', message: 'Old password entered is incorrect', title: 'TouchBase - Settings'});
+        res.render('settings', {js: 'settings', message: 'Old password entered is incorrect', title: 'Touchbase - Settings'});
         return;
       }
     }
@@ -204,9 +224,9 @@ app.post('/settings',
           for(var key in insert) {
             req.session.user[key] = insert[key];
           }
-          res.render('settings', {js: 'settings', message: 'Account settings updated', title: 'TouchBase - Updated Settings'});
+          res.render('settings', {js: 'settings', message: 'Account settings updated', title: 'Touchbase - Updated Settings'});
         } else {
-          res.render('settings', {js: 'settings', message: 'New email is already associated with an account', title: 'TouchBase - Duplicate Email'});
+          res.render('settings', {js: 'settings', message: 'New email is already associated with an account', title: 'Touchbase - Duplicate Email'});
         }
       });
     } else {
@@ -214,14 +234,14 @@ app.post('/settings',
       for(var key in insert) {
         req.session.user[key] = insert[key];
       }
-      res.render('settings', {js: 'settings', message: 'Account settings updated', title: 'TouchBase - Updated Settings'});
+      res.render('settings', {js: 'settings', message: 'Account settings updated', title: 'Touchbase - Updated Settings'});
     }
   }
 );
 
 
 app.get('*', function(req, res){
-  res.render('404', {status: 404, title: 'TouchBase - 404'});
+  res.render('404', {status: 404, title: 'Touchbase - 404'});
 });
 app.listen(80);
 
