@@ -1,0 +1,17 @@
+<script>
+
+var data = <%-JSON.stringify(docs)%>;
+
+</script>
+<div id="bg-alt">
+  <a href="/dashboard" id="header"><img src="/images/logo.png"></a>
+  
+  <%-partial('usermenu.ejs')%>
+  <div id="main-alt" class="main-large">
+  <h1><%=contact.name%></h1>
+  
+  <div id="chartdiv" style="height:400px;width:740px; "></div>
+  
+  <div class="clear"></div>
+ 
+</div>

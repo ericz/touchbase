@@ -20,6 +20,7 @@ var Contacts = db.collection('contacts');
 var Calls = db.collection('call');
 var Texts = db.collection('text');
 var Gmail = db.collection('gmail');
+var Data = db.collection('data');
 var Fb = db.collection('fb');
 
 var app =  express.createServer();
@@ -165,6 +166,18 @@ app.get('/dashboard', loggedIn, function(req, res){
 app.get('/logout', loggedIn, function(req, res) {
   delete req.session.user;
   res.redirect('/');
+});
+
+app.get('/contact/:id', loggedIn, function(req, res){
+  Contacts.findById(req.params.id, function(err, doc) {
+    if(err || !doc) {
+      res.redirect('/404');
+      return;
+    }
+    Data.find({userid: req.session.user._id, contactid: req.params.id}, {sort: {date: -1}}).toArray(function(err, docs){
+      res.render('contact', {js: 'contact', title: 'Touchbase - ' + doc.name, docs: docs, contact: doc})
+    });
+  });
 });
 
 app.post('/login', 
