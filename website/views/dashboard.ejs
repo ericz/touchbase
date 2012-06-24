@@ -9,7 +9,7 @@
   <% for (var i = 0, ii = docs.length; i < ii; i++) { %>
   <% var doc = docs[i]; %>
   <div class="contactthumb" style="background-image: url(http://graph.facebook.com/<%=doc.fbid||1%>/picture?type=large)">
-    <div class="contactdata"><% if(doc.last.call.length > 0) { %>  <%=doc.last.call[0].duration%> seconds at <%=doc.last.call[0].date.toString(); %> <%}  %></div>
+    <div class="contactdata"><% if(doc.last.call.length > 0) { %>  <%=doc.last.call[0].duration%> seconds at <%=doc.last.call[0].date.toString()%> <%}  %></div>
     <div class="contactname"><%=doc.name%></div>
   </div>
   <% } %>
