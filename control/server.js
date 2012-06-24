@@ -66,11 +66,14 @@ app.post('/:user/addData' , function(req, res){
   var collectionType = req.body.type
   var userid = req.params.user
   var data = req.body.data
+  var toInsert = []
   for (var i = 0 , ii = data.length ; i < ii ; i = i + 1){
     var datum = data[i];
+    datum['date'] = new Date(data['date'])
     datum['userid'] = userid
+    toInsert.push(datum)
   }
-  db.collection(collectionType).insert(data, function(err, result){
+  db.collection(collectionType).insert(toInsert, function(err, result){
     if (err) { throw err; }
   })
   res.send()

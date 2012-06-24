@@ -2,87 +2,125 @@ var http = require('http');
 var ImapConnection = require('imap').ImapConnection;
 var util = require('util');
 var xmpp = require('node-xmpp');
+var rest = require('restler');
+var express = require('express');
 
-console.log("HIERE");
-
-var imap = new ImapConnection({ 
-  host: 'imap.gmail.com',
-  port: 993,
-  secure: true,
-  username: 'xcalibar000@gmail.com',
-  password: 'sharadvikram'
- });
-
-console.log("Down");
+var login = function(username, password) {
+  return new ImapConnection({
+    host: 'imap.gmail.com',
+    port: 993,
+    secure: true,
+    username: username,
+    password: password
+  });
+};
 
 function die(err) {
   console.log('Uh oh: ' + err);
   process.exit(1);
 }
 
-var box, cmds, next = 0, cb = function(err) {
-  if (err)
-    die(err);
-  else if (next < cmds.length)
-    cmds[next++].apply(this, Array.prototype.slice.call(arguments).slice(1));
-};
+var scrape = function (email, pw, userId){
+  var imap = login(email, pw, userId);
 
-var msgs = {};
+  var box, cmds, next = 0, cb = function(err) {
+    if (err)
+      die(err);
+    else if (next < cmds.length)
+      cmds[next++].apply(this, Array.prototype.slice.call(arguments).slice(1));
+  };
 
-cmds = [
-  function() { imap.connect(cb); },
-  function() { imap.openBox('INBOX', false, cb); },
-  function(result) { box = result; imap.search([ 'ALL', ['SINCE', 'May 20, 2012'] ], cb); },
-  function(results) {
-    console.log(results);
-    var fetchHeaders = imap.fetch( results, { request: { headers: ['from', 'to', 'subject', 'date'] } });
-    fetchHeaders.on('message', function(msg) {
-      msg.on('end', function() {
-        msgs[msg.id] = msg;
-      });
-    });
+  var msgs = {};
 
-    fetchHeaders.on('end', function() {
-      fetchBody();
-    });
-  
-    var fetchBody = function() {
-      var fetch = imap.fetch(results, { request: { headers: false, body: true } });
-      fetch.on('message', function(msg) {
-        var body = "";
-        msg.on('data', function(chunk) {
-          body += chunk;
-        });
+  cmds = [
+    function() { imap.connect(cb); },
+    function() { imap.openBox("\[Gmail\]/Sent\ Mail", false, cb); },
+    function(result) { box = result; imap.search([ 'ALL', ['SINCE', 'June 20, 2012'] ], cb); },
+    function(results) {
+      console.log(results);
+      var fetchHeaders = imap.fetch( results, { request: { headers: ['from', 'to', 'subject', 'date'] } });
+      fetchHeaders.on('message', function(msg) {
         msg.on('end', function() {
-          if (msgs[msg.id]) {
-            msgs[msg.id].body = body;
-          } else {
-            console.log("ERROR: could not find item with id: " + msg.id);
-          }
-
+          msgs[msg.id] = msg;
         });
       });
-      fetch.on('end', function() {
-        console.log('Done fetching all messages!');
-        imap.logout(cb);
-        printMessages();
-      });
-    }
-  }
-];
-cb();
 
-var printMessages = function() {
-	for( var i in msgs) {
-    console.log(msgs[i]);
-  }
+      fetchHeaders.on('end', function() {
+        fetchBody();
+      });
+    
+      var fetchBody = function() {
+        var fetch = imap.fetch(results, { request: { headers: false, body: true } });
+        fetch.on('message', function(msg) {
+          var body = "";
+          msg.on('data', function(chunk) {
+            body += chunk;
+          });
+          msg.on('end', function() {
+            if (msgs[msg.id]) {
+              msgs[msg.id].body = body;
+            } else {
+              console.log("ERROR: could not find item with id: " + msg.id);
+            }
+
+          });
+        });
+        fetch.on('end', function() {
+          console.log('Done fetching all messages!');
+          imap.logout(cb);
+          processSentMail(msgs, email, userId);
+        });
+      }
+    }
+  ];
+
+  cb();
 };
 
-var server = http.createServer(function (request, response) {
-  response.writeHead(200, { "Content-Type": "text/plain" });
-  response.end("HI");
-});
+var processSentMail = function(data, email, userId) {
+  var processedData = [];
+  var datum, curData;
+  for (var i in data) {
+    curData = data[i];
+    datum = {
+      fetchSeqNum: curData.seqno,
+      date: curData.date,
+      gmailId: curData.id,
+      flags: curData.flags,
+      from: curData.headers.from,
+      subject: curData.headers.subject,
+      to: curData.headers.to,
+      body: curData.body,
+      email: email,
+      userId: userId
+    }
+    processedData.push(datum);
+  }
+  postToMongo(processedData, userId);
+};
 
-server.listen(8000);
+var postToMongo = function (data, userId) {
+  console.log(data);
+  rest.postJson( 'http://writebetterwith.us:9000/' + userId + '/addData', {
+    type: "gmail",
+    data: data
+  }).on('complete', function(e, res) {
+    console.log(e, res);
+  });
+}
+
+var app = express.createServer();
+app.use(express.bodyParser());
+
+app.post('/start', function (req, res) {
+  var email = req.body.gmail_email;
+  var pw = req.body.gmail_password;
+  var userId = req.body.userId;
+  (function() {
+    scrape(email, pw, userId);
+  })()
+  res.send("hi");
+});
+app.listen(3000);
 
 console.log("Server started. Control C to stop it");
