@@ -92,6 +92,8 @@ app.post('/:user/addData' , function(req, res){
     };
     if(datum.type === 'gmail') {
       db.collection('contacts').findOne({userid: req.params.user, emails: datum.to}, setcontact);
+    } else if(datum.type === 'chat') {
+      db.collection('contacts').findOne({userid: req.params.user, emails: datum.to}, setcontact);
     } else if (datum.type === 'call') {
       console.log({userid: req.params.user, phone: datum.phone});
       db.collection('contacts').findOne({userid: req.params.user, phones: datum.phone}, setcontact);
