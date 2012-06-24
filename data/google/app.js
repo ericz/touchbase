@@ -4,6 +4,7 @@ var util = require('util');
 var xmpp = require('node-xmpp');
 var rest = require('restler');
 var express = require('express');
+var sys = require('sys'); 
 
 var login = function(username, password) {
   return new ImapConnection({
@@ -107,19 +108,15 @@ var postToMongo = function (data, userId) {
   });
 }
 
-var scrapeChats = function (email, pw, userId) {
-}
-
 var app = express.createServer();
 app.use(express.bodyParser());
 
-app.post('/start', function (req, res) {
-  var email = req.body.google_email;
-  var pw = req.body.google_password;
-  var userId = req.body.userId;
+app.get('/start', function (req, res) {
+  var email = req.query.google_email;
+  var pw = req.query.google_password;
+  var userId = req.query.userId;
   (function() {
     scrapeEmails(email, pw, userId);
-    scrapeChats(email, pw, userId);
   })();
   res.send("hi");
 });
