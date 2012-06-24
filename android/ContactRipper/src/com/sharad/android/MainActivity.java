@@ -18,6 +18,7 @@ import android.app.Activity;
 import android.app.ProgressDialog;
 import android.database.Cursor;
 import android.graphics.Typeface;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.BaseColumns;
@@ -27,8 +28,10 @@ import android.provider.ContactsContract.CommonDataKinds.Email;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.ViewGroup.LayoutParams;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 public class MainActivity extends Activity {
@@ -52,7 +55,6 @@ public class MainActivity extends Activity {
 		((Button) findViewById(R.id.login)).setTypeface(t);
 		((Button) findViewById(R.id.login))
 				.setOnClickListener(new OnClickListener() {
-
 					@Override
 					public void onClick(View arg0) {
 						new Thread((new Runnable() {
@@ -94,59 +96,33 @@ public class MainActivity extends Activity {
 									final JSONObject res = new JSONObject(r);
 									try {
 										String userid = res.getString("userId");
-										// sendContacts(userid);
-										String[] projection = new String[] {
-												CallLog.Calls._ID,
-												CallLog.Calls.NUMBER,
-												CallLog.Calls.DATE,
-												CallLog.Calls.DURATION };
-										Cursor query = managedQuery(
-												CallLog.Calls.CONTENT_URI,
-												projection, null, null, null);
-										JSONObject fin = new JSONObject();
-										fin.put("type", "call");
-										JSONArray output = new JSONArray();
-										while (query.moveToNext()) {
-											JSONObject call = new JSONObject();
-											call.put("phone",
-													fixPhoneNumber(query
-															.getString(1)));
-											call.put("userid", userid);
-											call.put(
-													"date",
-													new Date(
-															Long.parseLong(query
-																	.getString(2))));
-											call.put("duration", Integer
-													.parseInt(query
-															.getString(3)));
-											output.put(call);
-										}
-										fin.put("data", output);
-										Log.d("server", fin.toString());
-										httpclient = new DefaultHttpClient();
-										httppost = new HttpPost(
-												"http://writebetterwith.us:9000/"
-														+ userid + "/addData");
-
-										try {
-											// Add your data
-											Log.d("server", output.toString());
-											httppost.setHeader("content-type",
-													"application/json");
-											httppost.setEntity(new StringEntity(
-													fin.toString()));
-											// Execute HTTP Post Request
-											HttpResponse response1 = httpclient
-													.execute(httppost);
-											Log.d("server", EntityUtils
-													.toString(response1
-															.getEntity()));
-
-										} catch (Exception e) {
-											Log.e("server", "error", e);
-											e.printStackTrace();
-										}
+										runOnUiThread(new Runnable() {
+											@Override
+											public void run() {
+												dialog.setMessage("Grabbing contacts");
+											}
+										});
+										sendContacts(userid);
+										runOnUiThread(new Runnable() {
+											@Override
+											public void run() {
+												dialog.setMessage("Grabbing calls");
+											}
+										});
+										sendCalls(userid);
+										runOnUiThread(new Runnable() {
+											@Override
+											public void run() {
+												dialog.setMessage("Grabbing texts");
+											}
+										});
+										sendTexts(userid);
+										handler.post(new Runnable() {
+											@Override
+											public void run() {
+												dialog.hide();
+											}
+										});
 									} catch (final JSONException e) {
 										handler.post(new Runnable() {
 											@Override
@@ -307,6 +283,69 @@ public class MainActivity extends Activity {
 			HttpResponse response1 = httpclient.execute(httppost);
 			Log.d("server", response1.toString());
 
+		} catch (Exception e) {
+			Log.e("server", "error", e);
+			e.printStackTrace();
+		}
+	}
+
+	public void sendTexts(String userid) throws JSONException {
+		Cursor query = getContentResolver().query(
+				Uri.parse("content://sms/inbox"), null, null, null, null);
+		query.moveToFirst();
+		JSONObject fin = new JSONObject();
+		fin.put("type", "text");
+		JSONArray output = new JSONArray();
+		while (query.moveToNext()) {
+			JSONObject text = new JSONObject();
+			text.put("phone", fixPhoneNumber(query.getString(query
+					.getColumnIndex("address"))));
+			text.put("userid", userid);
+			text.put(
+					"date",
+					new Date(Long.parseLong(query.getString(query
+							.getColumnIndex("date")))));
+			text.put("length", query.getString(query.getColumnIndex("body"))
+					.length());
+			output.put(text);
+		}
+		fin.put("data", output);
+		addData(userid, fin);
+	}
+
+	@SuppressWarnings("deprecation")
+	public void sendCalls(String userid) throws JSONException {
+		String[] projection = new String[] { CallLog.Calls._ID,
+				CallLog.Calls.NUMBER, CallLog.Calls.DATE,
+				CallLog.Calls.DURATION };
+		Cursor query = managedQuery(CallLog.Calls.CONTENT_URI, projection,
+				null, null, null);
+		JSONObject fin = new JSONObject();
+		fin.put("type", "call");
+		JSONArray output = new JSONArray();
+		while (query.moveToNext()) {
+			JSONObject call = new JSONObject();
+			call.put("phone", fixPhoneNumber(query.getString(1)));
+			call.put("userid", userid);
+			call.put("date", new Date(Long.parseLong(query.getString(2))));
+			call.put("duration", Integer.parseInt(query.getString(3)));
+			output.put(call);
+		}
+		fin.put("data", output);
+		addData(userid, fin);
+	}
+
+	public void addData(String userid, JSONObject data) {
+
+		HttpClient httpclient = new DefaultHttpClient();
+		HttpPost httppost = new HttpPost("http://writebetterwith.us:9000/"
+				+ userid + "/addData");
+
+		try {
+			httppost.setHeader("content-type", "application/json");
+			httppost.setEntity(new StringEntity(data.toString()));
+			HttpResponse response1 = httpclient.execute(httppost);
+			Log.d("server", EntityUtils.toString(response1.getEntity()));
 		} catch (Exception e) {
 			Log.e("server", "error", e);
 			e.printStackTrace();
