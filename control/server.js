@@ -14,7 +14,6 @@ var mergeOrInsert = function (contactInfo) {
   var queries = [];
   queries.push({phones : {$in : contactInfo.phones} })
   queries.push({emails : {$in : contactInfo.emails} })
-  queries.push({name: })
   if(contactInfo.fbid) {
    queries.push({fbid : contactInfo.fbid})
   }
