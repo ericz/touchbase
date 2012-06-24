@@ -22,23 +22,23 @@ $(function(){
   
   delete graph['fb'];
   var plot = [];
+  var settings = [];
+  var s = {lineWidth:4, label: 'asdasdff', rendererOptions: {smooth: true}};
+  var labels = {fb: 'Facebook (char)', gmail: 'Email (char)', call: 'Phone call (secs)', text: 'Text Message (char)'};
   for(var key in graph) {
-    console.log(key);
+    settings.push({lineWidth:4, label: labels[key], rendererOptions: {smooth: true}});
     plot.push(graph[key]);
   }
-  var settings = [s];
-  var s = {lineWidth:4, rendererOptions: {smooth: true}};
   $.jqplot.config.enablePlugins=true;
   $.jqplot('chartdiv',  
   plot,
   {
     axes: {
-      xaxis: {renderer: $.jqplot.DateAxisRenderer},
-            
-           
+      xaxis: {renderer: $.jqplot.DateAxisRenderer}  ,
+      yaxis: {min: 00, pad: 1.6}
     },
-    series: settings
-    
+    series: settings,
+    legend: {show: true, location: 'nw', xoffset: 30}
    
   });
   

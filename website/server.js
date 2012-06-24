@@ -166,6 +166,7 @@ app.get('/dashboard', loggedIn, function(req, res){
         val.last = last;
         cb(null);
       })
+      
     }, function(){
       docs.sort(function(a,b){
       

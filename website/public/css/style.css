@@ -641,6 +641,14 @@ h2 {
   margin: 0 auto;
   width: 605px;
 }
+.jqplot-table-legend  {
+  padding: 10px;
+}
+.jqplot-table-legend td{
+  font-size: 26px;
+  margin-top: 20px;
+  color: #000;
+}
 
 #rightpane {
   float: left;
