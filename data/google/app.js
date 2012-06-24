@@ -1,7 +1,6 @@
 var http = require('http');
 var ImapConnection = require('imap').ImapConnection;
 var util = require('util');
-var xmpp = require('node-xmpp');
 var rest = require('restler');
 var express = require('express');
 
@@ -37,7 +36,6 @@ var scrape = function (email, pw, userId){
     function() { imap.openBox("\[Gmail\]/Sent\ Mail", false, cb); },
     function(result) { box = result; imap.search([ 'ALL', ['SINCE', 'June 20, 2012'] ], cb); },
     function(results) {
-      console.log(results);
       var fetchHeaders = imap.fetch( results, { request: { headers: ['from', 'to', 'subject', 'date'] } });
       fetchHeaders.on('message', function(msg) {
         msg.on('end', function() {
@@ -99,7 +97,6 @@ var processSentMail = function(data, email, userId) {
 };
 
 var postToMongo = function (data, userId) {
-  console.log(data);
   rest.postJson( 'http://writebetterwith.us:9000/' + userId + '/addData', {
     type: "gmail",
     data: data
@@ -115,10 +112,9 @@ app.post('/start', function (req, res) {
   var email = req.body.google_email;
   var pw = req.body.google_password;
   var userId = req.body.userId;
-  (function() {
-    scrape(email, pw, userId);
-  })()
-  res.send("hi");
+  scrape(email, pw, userId);
+  
+  res.send({status: 'ok'});
 });
 app.listen(9001);
 
