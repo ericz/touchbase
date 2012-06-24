@@ -27,7 +27,6 @@ var scrapeEmails = function (email, pw, userId){
 
   var box, cmds, next = 0, cb = function(err) {
     if (err) {
-      console.log(err);
       if( JSON.stringify(err).indexOf("Error while executing request: [NONEXISTENT] Unknown Mailbox: [Gmail]/Chats (now in authenticated state) (Failure)") != -1) {
         die(err);
       } else {
@@ -37,28 +36,35 @@ var scrapeEmails = function (email, pw, userId){
     else if (next < cmds.length) {
       cmds[next++].apply(this, Array.prototype.slice.call(arguments).slice(1));
     } else {
-      console.log("Finished everything");
       imap.logout();
     }
   };
 
-  var msgs = {};
 
   cmds = [
     function() { imap.connect(cb); },
     function() { imap.openBox("\[Gmail\]/Sent\ Mail", false, cb); },
-    function(result) { box = result; imap.search([ 'ALL', ['SINCE', SEARCH_FROM] ], cb); },
+    function(result) { 
+      var box = result; 
+      imap.search([ 'ALL', ['SINCE', SEARCH_FROM] ], cb); 
+    },
     function(results) {
       var isChat = false;
       fetchBox(results, isChat);
     },
-    function() { imap.openBox("\[Gmail\]/Chats", false, cb); },
-    function(result) { box = result; imap.search([ 'ALL', ['SINCE', SEARCH_FROM] ], cb); },
+    function() { 
+      imap.openBox("\[Gmail\]/Chats", false, cb); 
+    },
+    function(result) { 
+      var box = result; 
+      imap.search([ 'ALL', ['SINCE', SEARCH_FROM] ], cb); 
+    },
     function(results) {
       fetchBox(results, true);
     }
   ];
   var fetchBox = function(results, isChat) {
+    var msgs = {};
     var fetchHeaders = imap.fetch( results, { request: { headers: ['from', 'to', 'subject', 'date'] } });
     fetchHeaders.on('message', function(msg) {
       msg.on('end', function() {
@@ -87,7 +93,6 @@ var scrapeEmails = function (email, pw, userId){
         });
       });
       fetch.on('end', function() {
-        console.log('Done fetching sent emails!');
         processSentMail(msgs, email, userId, isChat);
         cb();
       });
@@ -128,7 +133,6 @@ var processSentMail = function(data, email, userId, isChat) {
         isChat: isChat
       }
       processedData.push(datum);
-      console.log(datum);
     }
   }
   postToMongo(processedData, userId);
@@ -147,7 +151,6 @@ var app = express.createServer();
 app.use(express.bodyParser());
 
 // GET used for testing
-/*
 app.get('/start', function (req, res) {
   var email = req.query.google_email;
   var pw = req.query.google_password;
@@ -155,7 +158,7 @@ app.get('/start', function (req, res) {
   scrapeEmails(email, pw, userId);
 
   res.send({status: 'ok'});
-});*/
+});
 
 
 
