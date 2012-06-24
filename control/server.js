@@ -11,12 +11,15 @@ app.use(express.bodyParser());
 
 
 var mergeOrInsert = function (contactInfo) {
+  var queries = [];
+  queries.push({phones : {$in : contactInfo.phones} })
+  queries.push({emails : {$in : contactInfo.emails} })
   
-  var phoneQuery = {phones : {$in : contactInfo.phones} }
-  var emailQuery = {emails : {$in: contactInfo.emails} } 
-  var fbQuery = {fbid : contactInfo.fbid}
+  if(contactInfo.fbid) {
+   queries.push({fbid : contactInfo.fbid})
+  }
   
-  var query = {$and : [ {userid : contactInfo.userid} , {$or : [  phoneQuery , emailQuery, fbQuery ] } ] }
+  var query = {$and : [ {userid : contactInfo.userid} , {$or : queries } ] }
   
   Contacts.findOne( query , function (err, result){
     if (err) {
