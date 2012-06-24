@@ -1,7 +1,6 @@
 var http = require('http');
 var ImapConnection = require('imap').ImapConnection;
 var util = require('util');
-var xmpp = require('node-xmpp');
 var rest = require('restler');
 var express = require('express');
 var sys = require('sys'); 
@@ -99,26 +98,24 @@ var processSentMail = function(data, email, userId) {
 };
 
 var postToMongo = function (data, userId) {
-  console.log(data);
   rest.postJson( 'http://writebetterwith.us:9000/' + userId + '/addData', {
     type: "gmail",
     data: data
   }).on('complete', function(e, res) {
-    console.log(e, res);
+    console.log('Done posting to mongo');
   });
 }
 
 var app = express.createServer();
 app.use(express.bodyParser());
 
-app.get('/start', function (req, res) {
-  var email = req.query.google_email;
-  var pw = req.query.google_password;
-  var userId = req.query.userId;
-  (function() {
-    scrapeEmails(email, pw, userId);
-  })();
-  res.send("hi");
+app.post('/start', function (req, res) {
+  var email = req.body.google_email;
+  var pw = req.body.google_password;
+  var userId = req.body.userId;
+  scrape(email, pw, userId);
+  
+  res.send({status: 'ok'});
 });
 app.listen(9001);
 

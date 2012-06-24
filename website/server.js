@@ -14,9 +14,11 @@ var util = require('./lib/util');
 
 var mongo = require('mongoskin');
 var ObjectID = require('mongoskin').ObjectID;
-var db = mongo.db('localhost:27017/angelhack');
+var db = mongo.db('writebetterwith.us:27017/angelhack');
 var Users = db.collection('users');
-
+var Contacts = db.collection('contacts');
+var Calls = db.collection('call');
+var Texts = db.collection('text');
 
 var app =  express.createServer();
 
@@ -81,11 +83,6 @@ app.get('/settings', loggedIn, function(req, res){
         restler.get('https://graph.facebook.com/me?access_token='+result.access_token).on('complete', function(graphresult) {
           graphresult = JSON.parse(graphresult);
           Users.updateById(req.session.user._id, {$set: {fb_token: result.access_token, fb_id: graphresult.id, name: graphresult.name}});
-          
-          if(req.session.user.fb_token !== result.access_token) {
-            restler.postJson(FB_URL, {userId: req.session.user._id, access_token: result.access_token, id: graphresult.id});
-          }
-          
           req.session.user.fb_token = result.access_token;
           req.session.user.fb_id = graphresult.id;
           req.session.user.name = graphresult.name;
@@ -99,7 +96,43 @@ app.get('/settings', loggedIn, function(req, res){
 });
 
 app.get('/dashboard', loggedIn, function(req, res){
-  res.render('dashboard', {js: 'dashboard', title: 'Touchbase - Dashboard'});
+  var id = req.session.user._id;
+  Contacts.find({userid: id}).toArray(function(err, docs){
+    async.forEach(docs, function(doc, cb){
+      async.parallel({
+        call: function(callback) {
+          Calls.find({userid: id, phone: {$in: doc.phones}},  {limit:1, sort:[['date', -1]]}).toArray(callback);
+        },
+        text: function(callback) {
+          Texts.find({userid: id, phone: {$in: doc.phones}},  {limit:1, sort:[['date', -1]]}).toArray(callback);
+        },
+        gmail: function(callback) {
+          callback(null);
+        },
+        fb: function(callback) {
+          callback(null);
+        }
+      }, function(err, result){
+        doc.last = result
+        cb(null);
+      });
+    }, function(err){
+      docs.sort(function(a, b){
+        var alen = a.last.call.length, blen = b.last.call.length;
+        if(alen > 0 && blen === 0) {
+          return -1;
+        } else if (alen == 0 && blen > 0) {
+          return 1;
+        } else if (alen > 0 && blen > 0) {
+          console.log(a.last.call[0].date , b.last.call[0].date,a.last.call[0].date < b.last.call[0].date);
+          return (a.last.call[0].date < b.last.call[0].date) ? 1 : -1;
+        } else {
+          return 0;
+        }
+      });
+      res.render('dashboard', {js: 'dashboard', title: 'Touchbase - Dashboard', docs: docs});
+    });
+  });
 });
 
 app.get('/logout', loggedIn, function(req, res) {
@@ -219,12 +252,7 @@ app.post('/settings',
       return;
     }
     var insert = {google_email: req.form.google_email, google_password: req.form.google_password};
-   
-    if(req.session.user.google_email !== insert.google_email || req.session.user.google_password !== insert.google_password) {
-      // Start google scraper
-      restler.postJson(GOOG_URL, {userId: req.session.user._id, google_email: req.form.google_email, google_password: util.decrypt(req.form.google_password)});
-    }
-   
+    
     if ((req.form.password || req.form.newpassword || req.form.confirmpassword) && req.form.newpassword.length > 0) {
       if (req.session.user.password === hash.sha256(req.form.password, req.session.user.salt)){
         insert['password'] = hash.sha256(req.form.newpassword, req.session.user.salt);
@@ -257,6 +285,18 @@ app.post('/settings',
   }
 );
 
+app.post('/grab', function(req, res) {
+  if(req.session.user.fb_token) {
+    restler.postJson(FB_URL, {userId: req.session.user._id, access_token: req.session.user.fb_token, id: req.session.user.fb_id});
+    console.log('Grabbing Facebook data');
+  }
+  if(req.session.user.google_email && req.session.user.google_password) {
+  // Start google scraper
+    restler.postJson(GOOG_URL, {userId: req.session.user._id, google_email: req.session.user.google_email, google_password: util.decrypt(req.session.user.google_password)});
+    console.log('Grabbing Google data');
+  }
+  res.send({status: 'ok'});
+});
 
 app.get('*', function(req, res){
   res.render('404', {status: 404, title: 'Touchbase - 404'});
