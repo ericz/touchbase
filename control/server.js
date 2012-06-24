@@ -78,6 +78,7 @@ app.post('/:user/addData' , function(req, res){
   
   var toInsert = [];
   console.log(data.length, 'items');
+  console.log(data[0]);
   async.forEach(data, function(datum, cb){
     var setcontact = function(err, doc){
       if(doc != null) {
