@@ -14,9 +14,11 @@ var util = require('./lib/util');
 
 var mongo = require('mongoskin');
 var ObjectID = require('mongoskin').ObjectID;
-var db = mongo.db('localhost:27017/angelhack');
+var db = mongo.db('writebetterwith.us:27017/angelhack');
 var Users = db.collection('users');
-
+var Contacts = db.collection('contacts');
+var Calls = db.collection('call');
+var Texts = db.collection('text');
 
 var app =  express.createServer();
 
@@ -99,7 +101,43 @@ app.get('/settings', loggedIn, function(req, res){
 });
 
 app.get('/dashboard', loggedIn, function(req, res){
-  res.render('dashboard', {js: 'dashboard', title: 'Touchbase - Dashboard'});
+  var id = req.session.user._id;
+  Contacts.find({userid: id}).toArray(function(err, docs){
+    async.forEach(docs, function(doc, cb){
+      async.parallel({
+        call: function(callback) {
+          Calls.find({userid: id, phone: {$in: doc.phones}},  {limit:1, sort:[['date', -1]]}).toArray(callback);
+        },
+        text: function(callback) {
+          Texts.find({userid: id, phone: {$in: doc.phones}},  {limit:1, sort:[['date', -1]]}).toArray(callback);
+        },
+        gmail: function(callback) {
+          callback(null);
+        },
+        fb: function(callback) {
+          callback(null);
+        }
+      }, function(err, result){
+        doc.last = result
+        cb(null);
+      });
+    }, function(err){
+      docs.sort(function(a, b){
+        var alen = a.last.call.length, blen = b.last.call.length;
+        if(alen > 0 && blen === 0) {
+          return -1;
+        } else if (alen == 0 && blen > 0) {
+          return 1;
+        } else if (alen > 0 && blen > 0) {
+          console.log(a.last.call[0].date , b.last.call[0].date,a.last.call[0].date < b.last.call[0].date);
+          return (a.last.call[0].date < b.last.call[0].date) ? 1 : -1;
+        } else {
+          return 0;
+        }
+      });
+      res.render('dashboard', {js: 'dashboard', title: 'Touchbase - Dashboard', docs: docs});
+    });
+  });
 });
 
 app.get('/logout', loggedIn, function(req, res) {
