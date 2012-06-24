@@ -65,7 +65,7 @@ app.post('/:user/addContact', function(req, res){
           }
           mergeOrInsert(contactInfo)
         })
-      } else {        
+      } else if (contactInfo.emails){        
         async.forEach(contactInfo.emails, function(email, callback){
           rapportive.getFromGraph(user.fb_token, email, function (result) {  
             if (result) {
@@ -79,6 +79,8 @@ app.post('/:user/addContact', function(req, res){
         }, function(){
           mergeOrInsert(contactInfo)
         }) 
+      } else {
+        mergeOrInsert(contactInfo)
       }
     });
     res.send({"status": "ok"})
