@@ -19,7 +19,7 @@ var mergeOrInsert = function (contactInfo) {
   }
   
   if(contactInfo.name) {
-    queries.push(name: contactInfo.name);
+    queries.push({name: contactInfo.name});
   }
   
   var query = {$and : [ {userid : contactInfo.userid} , {$or : queries } ] }
