@@ -84,7 +84,7 @@ app.post('/:user/addData' , function(req, res){
       datum.contactid = doc._id.toString();
       datum.userid = req.params.user;
       toInsert.push(datum);
-      cb();
+      cb(null);
     };
     if(datum.type === 'gmail') {
       db.collection('contacts').findOne({userid: req.params.user, email: datum.to}, setcontact);
@@ -97,6 +97,7 @@ app.post('/:user/addData' , function(req, res){
     } 
   }, function(){
     db.collection('data').insert(toInsert);
+    console.log(toInsert.length);
     res.send({"status": "ok"})
   });
   
