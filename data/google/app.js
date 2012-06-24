@@ -5,6 +5,8 @@ var rest = require('restler');
 var express = require('express');
 var sys = require('sys'); 
 
+var SEARCH_FROM = 'June 20, 2012';
+
 var login = function(username, password) {
   return new ImapConnection({
     host: 'imap.gmail.com',
@@ -34,8 +36,9 @@ var scrapeEmails = function (email, pw, userId){
 
   cmds = [
     function() { imap.connect(cb); },
+    //function() { imap.getBoxes(function(x, y) {console.log(y)})},
     function() { imap.openBox("\[Gmail\]/Sent\ Mail", false, cb); },
-    function(result) { box = result; imap.search([ 'ALL', ['SINCE', 'June 20, 2012'] ], cb); },
+    function(result) { box = result; imap.search([ 'ALL', ['SINCE', SEARCH_FROM] ], cb); },
     function(results) {
       var fetchHeaders = imap.fetch( results, { request: { headers: ['from', 'to', 'subject', 'date'] } });
       fetchHeaders.on('message', function(msg) {
@@ -65,9 +68,47 @@ var scrapeEmails = function (email, pw, userId){
           });
         });
         fetch.on('end', function() {
-          console.log('Done fetching all messages!');
+          console.log('Done fetching sent emails!');
+          processSentMail(msgs, email, userId, false);
+          cb();
+        });
+      };
+    },
+    function() { imap.openBox("\[Gmail\]/Chats", false, cb); },
+    function(result) { box = result; imap.search([ 'ALL', ['SINCE', SEARCH_FROM] ], cb); },
+    function(results) {
+      var fetchHeaders = imap.fetch( results, { request: { headers: ['from', 'to', 'subject', 'date'] } });
+      fetchHeaders.on('message', function(msg) {
+        msg.on('end', function() {
+          msgs[msg.id] = msg;
+        });
+      });
+
+      fetchHeaders.on('end', function() {
+        fetchBody();
+      });
+    
+      var fetchBody = function() {
+        var fetch = imap.fetch(results, { request: { headers: false, body: true } });
+        fetch.on('message', function(msg) {
+          var body = "";
+          msg.on('data', function(chunk) {
+            body += chunk;
+          });
+          msg.on('end', function() {
+            if (msgs[msg.id]) {
+              msgs[msg.id].body = body;
+            } else {
+              console.log("ERROR: could not find item with id: " + msg.id);
+            }
+
+          });
+        });
+        fetch.on('end', function() {
           imap.logout(cb);
-          processSentMail(msgs, email, userId);
+          console.log("Done fetching the sent chats!");
+          processSentMail(msgs, email, userId, true);
+          cb();
         });
       };
     }
@@ -85,7 +126,7 @@ var trimName = function(to) {
   return to;
 }
 
-var processSentMail = function(data, email, userId) {
+var processSentMail = function(data, email, userId, isChat) {
   var processedData = [];
   var datum, curData;
   for (var i in data) {
@@ -102,9 +143,11 @@ var processSentMail = function(data, email, userId) {
         to: trimName(people[j]),
         people: people,
         body: curData.body,
-        email: email
+        email: email,
+        isChat: isChat
       }
       processedData.push(datum);
+      console.log(datum);
     }
   }
   postToMongo(processedData, userId);
@@ -123,6 +166,7 @@ var app = express.createServer();
 app.use(express.bodyParser());
 
 // GET used for testing
+/*
 app.get('/start', function (req, res) {
 var email = req.query.google_email;
 var pw = req.query.google_password;
@@ -130,10 +174,10 @@ var userId = req.query.userId;
 scrapeEmails(email, pw, userId);
 
 res.send({status: 'ok'});
-});
+});*/
 
 
-/*
+
 app.post('/start', function (req, res) {
   var email = req.body.google_email;
   var pw = req.body.google_password;
@@ -141,7 +185,7 @@ app.post('/start', function (req, res) {
   scrapeEmails(email, pw, userId);
 
   res.send({status: 'ok'});
-});*/
+});
 app.listen(9001);
 
 console.log("Server started. Control C to stop it");
