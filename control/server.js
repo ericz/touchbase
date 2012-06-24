@@ -77,10 +77,10 @@ app.post('/:user/addData' , function(req, res){
   var data = req.body.data
   
   var toInsert = [];
-  
+  console.log(data.length, 'items');
   async.forEach(data, function(datum, cb){
-  
     var setcontact = function(err, doc){
+      console.log(0);
       datum.contactid = doc._id.toString();
       datum.userid = req.params.user;
       toInsert.push(datum);
@@ -96,6 +96,7 @@ app.post('/:user/addData' , function(req, res){
       db.collection('contacts').findOne({userid: req.params.user, fbid: datum.fbid}, setcontact);
     } 
   }, function(){
+    console.log(1);
     db.collection('data').insert(toInsert);
     console.log(toInsert.length);
     res.send({"status": "ok"})
