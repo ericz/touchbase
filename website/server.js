@@ -155,10 +155,11 @@ app.get('/dashboard', loggedIn, function(req, res){
           return 0;
         }
       });
-      */
-      res.render('dashboard', {js: 'dashboard', title: 'Touchbase - Dashboard'});
+      
+      
     });
-  });
+  });*/
+  res.render('dashboard', {js: 'dashboard', title: 'Touchbase - Dashboard'});
 });
 
 app.get('/logout', loggedIn, function(req, res) {
