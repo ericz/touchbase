@@ -1,11 +1,24 @@
-
 <div id="bg-alt">
   <a href="/dashboard" id="header"><img src="/images/logo.png"></a>
   
   <%-partial('usermenu.ejs')%>
   <div id="main-alt" class="main-large">
   <h1></h1>
- 
+  <div id="collageButtons">
+    <div id="commNum" class="button">Total Communication</div>
+    <div id="callsNum" class="button">Calls</div>
+    <div id="chatNum" class="button">Chat</div>
+    <div id="emailNum" class="button">Email</div>
+    <div id="facebookNum" class="button">Facebook</div>
+  </div>
+  <div id="forSvg"></div>
+  <% for (var i = 0, ii = docs.length; i < ii; i++) { %>
+  <% var doc = docs[i]; %>
+  <div class="contactthumb" style="background-image: url(http://graph.facebook.com/<%=doc.fbid||1%>/picture?type=large)">
+    <div class="contactdata"><%=doc.last.date%></div>
+    <div class="contactname"><%=doc.name%></div>
+  </div>
+  <% } %>
   
   <div class="clear"></div>
  
