@@ -72,7 +72,7 @@ app.post('/:user/addData' , function(req, res){
   db.collection(collectionType).insert(data, function(err, result){
     if (err) { throw err; }
   })
-};
+});
 
 
 app.listen(9000);
