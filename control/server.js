@@ -67,12 +67,13 @@ app.post('/:user/addData' , function(req, res){
   var userid = req.params.user
   var data = req.body.data
   for (var i = 0 , ii = data.length ; i < ii ; i = i + 1){
-    var datum = req.body.data[i];
+    var datum = data[i];
     datum['userid'] = userid
   }
   db.collection(collectionType).insert(data, function(err, result){
     if (err) { throw err; }
   })
+  res.send()
 });
 
 
