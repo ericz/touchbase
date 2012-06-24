@@ -112,7 +112,6 @@ app.post('/start', function (req, res) {
   var email = req.body.google_email;
   var pw = req.body.google_password;
   var userId = req.body.userId;
-  console.log('got', req.body);
   scrape(email, pw, userId);
   
   res.send({status: 'ok'});
