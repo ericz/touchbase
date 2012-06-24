@@ -19,6 +19,8 @@ var Users = db.collection('users');
 var Contacts = db.collection('contacts');
 var Calls = db.collection('call');
 var Texts = db.collection('text');
+var Gmail = db.collection('gmail');
+var Fb = db.collection('fb');
 
 var app =  express.createServer();
 
@@ -107,29 +109,37 @@ app.get('/dashboard', loggedIn, function(req, res){
           Texts.find({userid: id, phone: {$in: doc.phones}},  {limit:1, sort:[['date', -1]]}).toArray(callback);
         },
         gmail: function(callback) {
+          //Gmail.find({userid: id, phone: {$in: doc.phones}},  {limit:1, sort:[['date', -1]]}).toArray(callback);
           callback(null);
         },
         fb: function(callback) {
-          callback(null);
+          Fb.find({userid: id, "people.name": doc.name},  {limit:1, sort:[['date', -1]]}).toArray(callback);
         }
       }, function(err, result){
         doc.last = result
         cb(null);
       });
     }, function(err){
-      docs.sort(function(a, b){
-        var alen = a.last.call.length, blen = b.last.call.length;
-        if(alen > 0 && blen === 0) {
+    
+      var sortByDate = function(a, b) {
+        if(a.date > b.date) {
           return -1;
-        } else if (alen == 0 && blen > 0) {
+        } else if (a.date < b.date) {
           return 1;
-        } else if (alen > 0 && blen > 0) {
-          console.log(a.last.call[0].date , b.last.call[0].date,a.last.call[0].date < b.last.call[0].date);
-          return (a.last.call[0].date < b.last.call[0].date) ? 1 : -1;
         } else {
           return 0;
         }
-      });
+      }
+    
+      for(var i = 0, ii = docs.length; i < ii; i++) {
+        var dates = [];
+        var doc = docs[i];
+        for(var key in doc.last) {
+          dates.push({type: key, date: doc.last[key][0].date});
+        }
+        dates.sort(sortByDate);
+        doc.last = doc.last[dates[0].type][0];
+      }
       res.render('dashboard', {js: 'dashboard', title: 'Touchbase - Dashboard', docs: docs});
     });
   });
