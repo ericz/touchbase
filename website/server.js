@@ -295,6 +295,7 @@ app.post('/grab', function(req, res) {
     restler.postJson(GOOG_URL, {userId: req.session.user._id, google_email: req.session.user.google_email, google_password: util.decrypt(req.session.user.google_password)});
     console.log('Grabbing Google data');
   }
+  res.send({status: 'ok'});
 });
 
 app.get('*', function(req, res){
