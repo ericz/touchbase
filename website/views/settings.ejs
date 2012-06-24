@@ -9,7 +9,7 @@
       <input type="text" name="email" placeholder="Email" <% if(locals.email) { %>value="<%=email%>"<% } %>>
       <p>Facebook credentials</p>
       <br>
-      <div class="small" id="fbtoken"><% if(locals.fb_token) { %><%=locals.fb_token%><% } else { %><a href="https://www.facebook.com/dialog/oauth?client_id=254026524706355&redirect_uri=http://localhost/settings&scope=read_mailbox,email"><img src="/images/fb.gif"></a><% } %></div>
+      <div class="small" id="fbtoken"><% if(locals.fb_token) { %><%=locals.fb_token%><% } else { %><a href="https://www.facebook.com/dialog/oauth?client_id=254026524706355&redirect_uri=http://writebetterwith.us/settings&scope=read_mailbox,email"><img src="/images/fb.gif"></a><% } %></div>
       <p>Google credentials</p>
       <input type="text" name="google_email" placeholder="Google username" <% if(locals.google_email) { %>value="<%=google_email%>"<% } %>>
       <br>
