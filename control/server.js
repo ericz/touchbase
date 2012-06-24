@@ -101,5 +101,33 @@ app.post('/:user/addData' , function(req, res){
   })
 });
 
+app.get('/:user/getTopFriends' , function (req, res) {
+  
+
+})
+
+app.get('/:user/find' , function (req, res) {
+  var userid = req.params.user;
+  var query = req.body.data;
+  Contacts.findOne( {$and : [ {userid : userid} , query]} , function (err , data) {
+    if (err) { throw err; } 
+    res.send({"status" : "ok" , "contact" : data})     
+  })  
+})
+
+app.post('/:user/follow', function (req, res) {
+  var toInsert = [] 
+  var userid = req.params.user
+  for ( var i = 0 , ii = req.body.data.length; i < ii ; i = i + 1) {
+    var contact = req.body.data[i]
+    var contactid = contact['_id'].toString()
+    toInsert.push(contactid)
+  }
+  db.collection('following').update({userid : userid}, { contacts : { $each : toInsert } } ,{upsert : true} ,function (err, result) {
+    if (err) {throw err; }
+    res.send({"status" : "ok"})  
+  }) 
+
+})
 
 app.listen(9000);
