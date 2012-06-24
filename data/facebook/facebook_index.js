@@ -13,20 +13,21 @@ var userId = "something";
 
 var base_url = "https://graph.facebook.com/";
 
-var post_url = "http://writebetterwith.us:9000/:userid/addContact";
 
 var app = express.createServer();
 
 var get_friends = function (access_token, id, userId, res) {
     var url = base_url + id + "/friends?access_token=" + access_token;
 
+    var post_url = "http://writebetterwith.us:9000/"+userId+"/addContact";
     rest.get(url).on('complete', function(result) {
         // this can be changed to something more structured,
         // and less dependent on the format of the text
         result = result.split('"id":');
         result = result.join('"fbid":');
-        result = JSON.parse(result);
-        rest.postJson(post_url, result.data);
+        result = JSON.parse(result).data;
+        console.log(result);
+        rest.postJson(post_url, result);
         /*
         for ( var i = 0; i < result.data.length; ++i ) {
             console.log(result.data[i].name + " ");
@@ -37,6 +38,7 @@ var get_friends = function (access_token, id, userId, res) {
 };
 
 var parse_result = function(id, result, userId) {
+    console.log(result);
     var data = [];
     for ( var i = 0; i < result.data.length; ++i ) {
         var conv = result.data[i];
@@ -63,7 +65,6 @@ var parse_result = function(id, result, userId) {
         
     }
     //post the data 
-    console.log(JSON.stringify(data));
     postToMongo(data, id);
 };
 
@@ -73,7 +74,9 @@ var get_messages = function(access_token, id, userId, res) {
     rest.get(url).on('complete', function(result) {
         //console.log(result);
         parse_result(id, JSON.parse(result), userId);
-        postToMongo(result, userId);
+        result = {type:'fb',data:result};
+//        console.log(result);
+        //postToMongo(result, userId);
     });
 };
 
@@ -92,8 +95,8 @@ var postToMongo = function (data, id) {
 };
 
 app.get("/get/:access_token/:id/:userId", function(req, res) {
-    //console.log(req.params);
-    scrape(access_token, id, userId, res);
-    //scrape(req.params[0], req.params[1], req.params[2], res);
+    //scrape(access_token, id, userId, res);
+    
+    scrape(req.params.access_token, req.params.id, req.params.userId, res);
 });
 app.listen(8888);
