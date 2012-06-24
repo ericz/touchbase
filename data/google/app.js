@@ -5,7 +5,7 @@ var rest = require('restler');
 var express = require('express');
 var sys = require('sys'); 
 
-var SEARCH_FROM = 'June 20, 2012';
+var SEARCH_FROM = 'March 20, 2012';
 
 var login = function(username, password) {
   return new ImapConnection({
