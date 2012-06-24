@@ -5,7 +5,7 @@ var rest = require('restler');
 var express = require('express');
 var sys = require('sys'); 
 
-var SEARCH_FROM = 'April 20, 2012';
+var SEARCH_FROM = 'June 20, 2012';
 
 var login = function(username, password) {
   return new ImapConnection({
@@ -121,21 +121,19 @@ var processSentMail = function(data, email, userId, isChat) {
       var people = curData.headers.to[0].split(", ");
       for ( var j in people ) {
         datum = {
-          fetchSeqNum: curData.seqno,
           date: curData.date,
-          gmailId: curData.id,
-          flags: curData.flags,
-          from: curData.headers.from,
-          subject: curData.headers.subject,
+          //subject: curData.headers.subject,
           to: trimName(people[j]),
-          people: people,
-          body: curData.body,
-          email: email,
-          isChat: isChat
+          //email: email,
+          length: curData.body.length,
+          userId: userId,
+          type: "gmail"
         }
         processedData.push(datum);
       }
     }
+    console.log(processedData);
+    console.log("Entering data of length: " + processedData.length);
     postToMongo(processedData, userId);
   } else {
     for (var i in data) {
@@ -143,25 +141,19 @@ var processSentMail = function(data, email, userId, isChat) {
       var people = curData.headers.from[0].split(", ");
       for ( var j in people ) {
         datum = {
-          fetchSeqNum: curData.seqno,
           date: curData.date,
-          gmailId: curData.id,
-          flags: curData.flags,
-          from: curData.headers.from,
-          subject: curData.headers.subject,
+          //subject: curData.headers.subject,
           to: trimName(people[j]),
-          people: people,
-          body: curData.body,
-          email: email,
-          isChat: isChat
+          //email: email,
+          length: curData.body.length,
+          userId: userId,
+          type: "gmail"
         }
         processedData.push(datum);
-        console.log(datum.subject);
-        if( datum.isChat) {
-          console.log(datum);
-        }
       }
     }
+    console.log("Entering data of length: " + processedData.length);
+    console.log(processedData);
     postToMongo(processedData, userId);
   }
 };
