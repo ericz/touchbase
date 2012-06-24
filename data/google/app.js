@@ -115,27 +115,59 @@ var trimName = function(to) {
 var processSentMail = function(data, email, userId, isChat) {
   var processedData = [];
   var datum, curData;
-  for (var i in data) {
-    curData = data[i];
-    var people = curData.headers.to[0].split(", ");
-    for ( var j in people ) {
-      datum = {
-        fetchSeqNum: curData.seqno,
-        date: curData.date,
-        gmailId: curData.id,
-        flags: curData.flags,
-        from: curData.headers.from,
-        subject: curData.headers.subject,
-        to: trimName(people[j]),
-        people: people,
-        body: curData.body,
-        email: email,
-        isChat: isChat
+  if( !isChat) {
+    for (var i in data) {
+      curData = data[i];
+      var people = curData.headers.to[0].split(", ");
+      for ( var j in people ) {
+        datum = {
+          fetchSeqNum: curData.seqno,
+          date: curData.date,
+          gmailId: curData.id,
+          flags: curData.flags,
+          from: curData.headers.from,
+          subject: curData.headers.subject,
+          to: trimName(people[j]),
+          people: people,
+          body: curData.body,
+          email: email,
+          isChat: isChat
+        }
+        processedData.push(datum);
+        console.log(datum.subject);
+        if( datum.isChat) {
+          console.log(datum);
+        }
       }
-      processedData.push(datum);
     }
+    postToMongo(processedData, userId);
+  } else {
+    for (var i in data) {
+      curData = data[i];
+      var people = curData.headers.from[0].split(", ");
+      for ( var j in people ) {
+        datum = {
+          fetchSeqNum: curData.seqno,
+          date: curData.date,
+          gmailId: curData.id,
+          flags: curData.flags,
+          from: curData.headers.from,
+          subject: curData.headers.subject,
+          to: trimName(people[j]),
+          people: people,
+          body: curData.body,
+          email: email,
+          isChat: isChat
+        }
+        processedData.push(datum);
+        console.log(datum.subject);
+        if( datum.isChat) {
+          console.log(datum);
+        }
+      }
+    }
+    postToMongo(processedData, userId);
   }
-  postToMongo(processedData, userId);
 };
 
 var postToMongo = function (data, userId) {
@@ -163,12 +195,12 @@ app.get('/start', function (req, res) {
 
 
 app.post('/start', function (req, res) {
-var email = req.body.google_email;
-var pw = req.body.google_password;
-var userId = req.body.userId;
-scrapeEmails(email, pw, userId);
+  var email = req.body.google_email;
+  var pw = req.body.google_password;
+  var userId = req.body.userId;
+  scrapeEmails(email, pw, userId);
 
-res.send({status: 'ok'});
+  res.send({status: 'ok'});
 });
 app.listen(9001);
 
