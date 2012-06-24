@@ -56,7 +56,11 @@ app.post('/:user/addContact', function(req, res){
         contactInfo.phones = []
       }
       
-      if (! contactInfo.emails && contactInfo.fbid) {
+      if (! contactInfo.emails){
+        contactInfo.emails = []
+      }
+      
+      if (contactInfo.emails.length === 0 && contactInfo.fbid) {
         db.collection('fb_emails').findOne({fbid : contactInfo.fbid} , function(err, result){
           if (result){
             contactInfo.emails = [result.email]          
@@ -65,7 +69,8 @@ app.post('/:user/addContact', function(req, res){
           }
           mergeOrInsert(contactInfo)
         })
-      } else if (contactInfo.emails){        
+      } else {
+        
         async.forEach(contactInfo.emails, function(email, callback){
           rapportive.getFromGraph(user.fb_token, email, function (result) {  
             if (result) {
@@ -79,8 +84,6 @@ app.post('/:user/addContact', function(req, res){
         }, function(){
           mergeOrInsert(contactInfo)
         }) 
-      } else {
-        mergeOrInsert(contactInfo)
       }
     });
     res.send({"status": "ok"})
