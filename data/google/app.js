@@ -20,7 +20,7 @@ function die(err) {
   process.exit(1);
 }
 
-var scrape = function (email, pw, userId){
+var scrapeEmails = function (email, pw, userId){
   var imap = login(email, pw, userId);
 
   var box, cmds, next = 0, cb = function(err) {
@@ -37,7 +37,6 @@ var scrape = function (email, pw, userId){
     function() { imap.openBox("\[Gmail\]/Sent\ Mail", false, cb); },
     function(result) { box = result; imap.search([ 'ALL', ['SINCE', 'June 20, 2012'] ], cb); },
     function(results) {
-      console.log(results);
       var fetchHeaders = imap.fetch( results, { request: { headers: ['from', 'to', 'subject', 'date'] } });
       fetchHeaders.on('message', function(msg) {
         msg.on('end', function() {
@@ -70,7 +69,7 @@ var scrape = function (email, pw, userId){
           imap.logout(cb);
           processSentMail(msgs, email, userId);
         });
-      }
+      };
     }
   ];
 
@@ -109,16 +108,20 @@ var postToMongo = function (data, userId) {
   });
 }
 
+var scrapeChats = function (email, pw, userId) {
+}
+
 var app = express.createServer();
 app.use(express.bodyParser());
 
-app.post('/start', function (req, res) {
+app.get('/start', function (req, res) {
   var email = req.body.gmail_email;
   var pw = req.body.gmail_password;
   var userId = req.body.userId;
   (function() {
-    scrape(email, pw, userId);
-  })()
+    //scrapeEmails(email, pw, userId);
+    scrapeChats(email, pw, userId);
+  })();
   res.send("hi");
 });
 app.listen(3000);
