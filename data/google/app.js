@@ -76,6 +76,16 @@ var scrapeEmails = function (email, pw, userId){
   cb();
 };
 
+var trimName = function(to) {
+  var openIndex = to.indexOf("<");
+  console.log("Index: " + openIndex);
+  if( openIndex != -1) {
+    var closeIndex = to.indexOf(">");
+    return to.substring(openIndex + 1, closeIndex);
+  }
+  return to;
+}
+
 var processSentMail = function(data, email, userId) {
   var processedData = [];
   var datum, curData;
@@ -88,10 +98,11 @@ var processSentMail = function(data, email, userId) {
       flags: curData.flags,
       from: curData.headers.from,
       subject: curData.headers.subject,
-      to: curData.headers.to,
+      to: trimName(curData.headers.to[0]),
       body: curData.body,
       email: email
     }
+    console.log(datum);
     processedData.push(datum);
   }
   postToMongo(processedData, userId);
@@ -108,6 +119,17 @@ var postToMongo = function (data, userId) {
 
 var app = express.createServer();
 app.use(express.bodyParser());
+
+/* GET used for testing
+app.get('/start', function (req, res) {
+  var email = req.query.google_email;
+  var pw = req.query.google_password;
+  var userId = req.query.userId;
+  scrapeEmails(email, pw, userId);
+  
+  res.send({status: 'ok'});
+});*/
+
 
 app.post('/start', function (req, res) {
   var email = req.body.google_email;
