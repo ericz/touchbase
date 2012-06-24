@@ -5,7 +5,7 @@ var rest = require('restler');
 var express = require('express');
 var sys = require('sys'); 
 
-var SEARCH_FROM = 'March 20, 2012';
+var SEARCH_FROM = 'April 20, 2012';
 
 var login = function(username, password) {
   return new ImapConnection({
@@ -134,10 +134,6 @@ var processSentMail = function(data, email, userId, isChat) {
           isChat: isChat
         }
         processedData.push(datum);
-        console.log(datum.subject);
-        if( datum.isChat) {
-          console.log(datum);
-        }
       }
     }
     postToMongo(processedData, userId);
