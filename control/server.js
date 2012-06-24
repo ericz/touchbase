@@ -44,7 +44,7 @@ var mergeOrInsert = function (contactInfo) {
   });
 }
 
-app.post('/:user/addContent', function(req, res){
+app.post('/:user/addContact', function(req, res){
   var contactInfo;
   contactInfo.userid = req.params.user
   console.log(req.body)
