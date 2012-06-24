@@ -1,9 +1,9 @@
-
 <div id="bg-alt">
   <a href="/dashboard" id="header"><img src="/images/logo.png"></a>
   
   <%-partial('usermenu.ejs')%>
   <div id="main-alt" class="main-large">
+
   <h1>My contacts</h1>
  <% for (var i =0, ii = docs.length; i < ii; i++) { %>
  <% var doc = docs[i] %>
@@ -12,6 +12,7 @@
     <div class="contactname"><%=doc.name%></div>
  </a>
  <% } %>
+
   
   <div class="clear"></div>
  
