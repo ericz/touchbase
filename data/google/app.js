@@ -3,6 +3,7 @@ var ImapConnection = require('imap').ImapConnection;
 var util = require('util');
 var rest = require('restler');
 var express = require('express');
+var sys = require('sys'); 
 
 var login = function(username, password) {
   return new ImapConnection({
@@ -19,7 +20,7 @@ function die(err) {
   process.exit(1);
 }
 
-var scrape = function (email, pw, userId){
+var scrapeEmails = function (email, pw, userId){
   var imap = login(email, pw, userId);
 
   var box, cmds, next = 0, cb = function(err) {
@@ -68,7 +69,7 @@ var scrape = function (email, pw, userId){
           imap.logout(cb);
           processSentMail(msgs, email, userId);
         });
-      }
+      };
     }
   ];
 
@@ -112,7 +113,7 @@ app.post('/start', function (req, res) {
   var email = req.body.google_email;
   var pw = req.body.google_password;
   var userId = req.body.userId;
-  scrape(email, pw, userId);
+  scrapeEmails(email, pw, userId);
   
   res.send({status: 'ok'});
 });
