@@ -91,8 +91,7 @@ var processSentMail = function(data, email, userId) {
       subject: curData.headers.subject,
       to: curData.headers.to,
       body: curData.body,
-      email: email,
-      userId: userId
+      email: email
     }
     processedData.push(datum);
   }
@@ -113,14 +112,14 @@ var app = express.createServer();
 app.use(express.bodyParser());
 
 app.post('/start', function (req, res) {
-  var email = req.body.gmail_email;
-  var pw = req.body.gmail_password;
+  var email = req.body.google_email;
+  var pw = req.body.google_password;
   var userId = req.body.userId;
   (function() {
     scrape(email, pw, userId);
   })()
   res.send("hi");
 });
-app.listen(3000);
+app.listen(9001);
 
 console.log("Server started. Control C to stop it");

@@ -12,11 +12,19 @@ public final class R {
     }
     public static final class drawable {
         public static final int bg=0x7f020000;
-        public static final int ic_launcher=0x7f020001;
-        public static final int logo=0x7f020002;
+        public static final int edittext=0x7f020001;
+        public static final int ic_launcher=0x7f020002;
+        public static final int loading=0x7f020003;
+        public static final int loginbutton_pressed=0x7f020004;
+        public static final int loginbutton_selector=0x7f020005;
+        public static final int loginbutton_unpressed=0x7f020006;
+        public static final int logo=0x7f020007;
     }
     public static final class id {
+        public static final int email=0x7f050001;
         public static final int fl=0x7f050000;
+        public static final int login=0x7f050003;
+        public static final int password=0x7f050002;
     }
     public static final class layout {
         public static final int main=0x7f030000;
