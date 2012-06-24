@@ -1,6 +1,6 @@
 var GOOG_URL = 'http://writebetterwith.us:9001/start';
 var FB_URL = 'http://writebetterwith.us:9002/start';
-
+var FB2_URL = 'http://writebetterwith.us:9005/start';
 var express = require('express');
 var fs = require('fs');
 var form = require('express-form'),
@@ -19,6 +19,8 @@ var Users = db.collection('users');
 var Contacts = db.collection('contacts');
 var Calls = db.collection('call');
 var Texts = db.collection('text');
+var Gmail = db.collection('gmail');
+var Fb = db.collection('fb');
 
 var app =  express.createServer();
 
@@ -96,7 +98,7 @@ app.get('/settings', loggedIn, function(req, res){
 });
 
 app.get('/dashboard', loggedIn, function(req, res){
-  var id = req.session.user._id;
+  /*var id = req.session.user._id;
   Contacts.find({userid: id}).toArray(function(err, docs){
     async.forEach(docs, function(doc, cb){
       async.parallel({
@@ -107,30 +109,54 @@ app.get('/dashboard', loggedIn, function(req, res){
           Texts.find({userid: id, phone: {$in: doc.phones}},  {limit:1, sort:[['date', -1]]}).toArray(callback);
         },
         gmail: function(callback) {
+          Gmail.find({userid: id, to: {$in: doc.emails}},  {limit:1, sort:[['date', -1]]}).toArray(callback);
           callback(null);
         },
         fb: function(callback) {
-          callback(null);
+          Fb.find({userid: id, to: doc.name},  {limit:1, sort:[['date', -1]]}).toArray(callback);
         }
       }, function(err, result){
         doc.last = result
         cb(null);
       });
     }, function(err){
-      docs.sort(function(a, b){
-        var alen = a.last.call.length, blen = b.last.call.length;
-        if(alen > 0 && blen === 0) {
+    
+      var sortByDate = function(a, b) {
+        if(a.date > b.date) {
           return -1;
-        } else if (alen == 0 && blen > 0) {
+        } else if (a.date < b.date) {
           return 1;
-        } else if (alen > 0 && blen > 0) {
-          console.log(a.last.call[0].date , b.last.call[0].date,a.last.call[0].date < b.last.call[0].date);
-          return (a.last.call[0].date < b.last.call[0].date) ? 1 : -1;
+        } else {
+          return 0;
+        }
+      }
+      var filtered = [];
+      for(var i = 0, ii = docs.length; i < ii; i++) {
+        var dates = [];
+        var doc = docs[i];
+        for(var key in doc.last) {
+          if(doc.last[key] && doc.last[key].length > 0) {
+            dates.push({type: key, date: doc.last[key][0].date});
+          }
+        }
+        if(dates.length > 0) {
+          dates.sort(sortByDate);
+          doc.last = doc.last[dates[0].type][0];
+          filtered.push(doc);
+        }
+      }
+      
+      filtered.sort(function(a, b){
+        if(a.last.date > b.last.date) {
+          return -1;
+        } else if (a.last.date < b.last.date) {
+          return 1;
         } else {
           return 0;
         }
       });
-      res.render('dashboard', {js: 'dashboard', title: 'Touchbase - Dashboard', docs: docs});
+      */
+      res.render('dashboard', {js: 'dashboard', title: 'Touchbase - Dashboard'});
     });
   });
 });
@@ -287,6 +313,9 @@ app.post('/settings',
 
 app.post('/grab', function(req, res) {
   if(req.session.user.fb_token) {
+    
+    restler.postJson(FB2_URL, {userId: req.session.user._id, access_token: req.session.user.fb_token, id: req.session.user.fb_id});
+    
     restler.postJson(FB_URL, {userId: req.session.user._id, access_token: req.session.user.fb_token, id: req.session.user.fb_id});
     console.log('Grabbing Facebook data');
   }

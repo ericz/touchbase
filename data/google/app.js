@@ -5,6 +5,8 @@ var rest = require('restler');
 var express = require('express');
 var sys = require('sys'); 
 
+var SEARCH_FROM = 'June 20, 2012';
+
 var login = function(username, password) {
   return new ImapConnection({
     host: 'imap.gmail.com',
@@ -24,77 +26,136 @@ var scrapeEmails = function (email, pw, userId){
   var imap = login(email, pw, userId);
 
   var box, cmds, next = 0, cb = function(err) {
-    if (err)
-      die(err);
-    else if (next < cmds.length)
+    if (err) {
+      if( JSON.stringify(err).indexOf("Error while executing request: [NONEXISTENT] Unknown Mailbox: [Gmail]/Chats (now in authenticated state) (Failure)") != -1) {
+        die(err);
+      } else {
+        console.log("Error: Unable to fetch chat box because IMAP not enabled");
+      }
+    }
+    else if (next < cmds.length) {
       cmds[next++].apply(this, Array.prototype.slice.call(arguments).slice(1));
+    } else {
+      imap.logout();
+    }
   };
 
-  var msgs = {};
 
   cmds = [
     function() { imap.connect(cb); },
     function() { imap.openBox("\[Gmail\]/Sent\ Mail", false, cb); },
-    function(result) { box = result; imap.search([ 'ALL', ['SINCE', 'June 20, 2012'] ], cb); },
+    function(result) { 
+      var box = result; 
+      imap.search([ 'ALL', ['SINCE', SEARCH_FROM] ], cb); 
+    },
     function(results) {
-      var fetchHeaders = imap.fetch( results, { request: { headers: ['from', 'to', 'subject', 'date'] } });
-      fetchHeaders.on('message', function(msg) {
-        msg.on('end', function() {
-          msgs[msg.id] = msg;
-        });
-      });
-
-      fetchHeaders.on('end', function() {
-        fetchBody();
-      });
-    
-      var fetchBody = function() {
-        var fetch = imap.fetch(results, { request: { headers: false, body: true } });
-        fetch.on('message', function(msg) {
-          var body = "";
-          msg.on('data', function(chunk) {
-            body += chunk;
-          });
-          msg.on('end', function() {
-            if (msgs[msg.id]) {
-              msgs[msg.id].body = body;
-            } else {
-              console.log("ERROR: could not find item with id: " + msg.id);
-            }
-
-          });
-        });
-        fetch.on('end', function() {
-          console.log('Done fetching all messages!');
-          imap.logout(cb);
-          processSentMail(msgs, email, userId);
-        });
-      };
+      var isChat = false;
+      fetchBox(results, isChat);
+    },
+    function() { 
+      imap.openBox("\[Gmail\]/Chats", false, cb); 
+    },
+    function(result) { 
+      var box = result; 
+      imap.search([ 'ALL', ['SINCE', SEARCH_FROM] ], cb); 
+    },
+    function(results) {
+      fetchBox(results, true);
     }
   ];
+  var fetchBox = function(results, isChat) {
+    var msgs = {};
+    var fetchHeaders = imap.fetch( results, { request: { headers: ['from', 'to', 'subject', 'date'] } });
+    fetchHeaders.on('message', function(msg) {
+      msg.on('end', function() {
+        msgs[msg.id] = msg;
+      });
+    });
+
+    fetchHeaders.on('end', function() {
+      fetchBody();
+    });
+
+    var fetchBody = function() {
+      var fetch = imap.fetch(results, { request: { headers: false, body: true } });
+      fetch.on('message', function(msg) {
+        var body = "";
+        msg.on('data', function(chunk) {
+          body += chunk;
+        });
+        msg.on('end', function() {
+          if (msgs[msg.id]) {
+            msgs[msg.id].body = body;
+          } else {
+            console.log("ERROR: could not find item with id: " + msg.id);
+          }
+
+        });
+      });
+      fetch.on('end', function() {
+        processSentMail(msgs, email, userId, isChat);
+        cb();
+      });
+    };
+  };
 
   cb();
 };
 
-var processSentMail = function(data, email, userId) {
+
+var trimName = function(to) {
+  var openIndex = to.indexOf("<");
+  if( openIndex != -1) {
+    var closeIndex = to.indexOf(">");
+    return to.substring(openIndex + 1, closeIndex);
+  }
+  return to;
+}
+
+var processSentMail = function(data, email, userId, isChat) {
   var processedData = [];
   var datum, curData;
-  for (var i in data) {
-    curData = data[i];
-    datum = {
-      fetchSeqNum: curData.seqno,
-      date: curData.date,
-      gmailId: curData.id,
-      flags: curData.flags,
-      from: curData.headers.from,
-      subject: curData.headers.subject,
-      to: curData.headers.to,
-      body: curData.body,
-      email: email
+  if( !isChat) {
+    for (var i in data) {
+      curData = data[i];
+      var people = curData.headers.to[0].split(", ");
+      for ( var j in people ) {
+        datum = {
+          date: curData.date,
+          //subject: curData.headers.subject,
+          to: trimName(people[j]),
+          //email: email,
+          length: curData.body.length,
+          userId: userId,
+          type: "gmail"
+        }
+        processedData.push(datum);
+      }
     }
-    processedData.push(datum);
+    console.log(processedData);
+    console.log("Entering data of length: " + processedData.length);
+    postToMongo(processedData, userId);
+  } else {
+    for (var i in data) {
+      curData = data[i];
+      var people = curData.headers.from[0].split(", ");
+      for ( var j in people ) {
+        datum = {
+          date: curData.date,
+          //subject: curData.headers.subject,
+          to: trimName(people[j]),
+          //email: email,
+          length: curData.body.length,
+          userId: userId,
+          type: "gmail"
+        }
+        processedData.push(datum);
+      }
+    }
+    console.log("Entering data of length: " + processedData.length);
+    console.log(processedData);
+    postToMongo(processedData, userId);
   }
-  postToMongo(processedData, userId);
 };
 
 var postToMongo = function (data, userId) {
@@ -109,12 +170,24 @@ var postToMongo = function (data, userId) {
 var app = express.createServer();
 app.use(express.bodyParser());
 
+// GET used for testing
+app.get('/start', function (req, res) {
+  var email = req.query.google_email;
+  var pw = req.query.google_password;
+  var userId = req.query.userId;
+  scrapeEmails(email, pw, userId);
+
+  res.send({status: 'ok'});
+});
+
+
+
 app.post('/start', function (req, res) {
   var email = req.body.google_email;
   var pw = req.body.google_password;
   var userId = req.body.userId;
   scrapeEmails(email, pw, userId);
-  
+
   res.send({status: 'ok'});
 });
 app.listen(9001);
