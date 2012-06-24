@@ -15,15 +15,23 @@ this.getFromRapportive = function(email, callback) {
   });
 }
 this.getFromGraph = function(email, callback) {
-  var token = "AAACEdEose0cBABuG9eqMRbiVC9XZAF8MGLd483NBrbnF7dbofP6HqK6EcOq11z4470CVROyWZA5ZCODdx0t2HoW0737K5D89eTMZCIhxFxegzSoRoihY";
+  var token = "AAACEdEose0cBAGWZCOQT5EQ8pPP6dImp3jS8YLPceQ7rSoCWZAg0ZBLT88j9HTjhz0ZBJbA2gwkfNPwc3ZAfGrtqWhulYgUUKGhmf6UURmAZDZD";
   if (token) {
     rest.get('https://graph.facebook.com/search?q='+email+'&type=user&access_token='+token).on('complete',function(result){
+	try {
       var obj = JSON.parse(result);
-      callback((obj.data)[0].id);
+	if (obj.data && obj.data.length > 0) {
+	      callback((obj.data)[0].id);
+	}
+	else {
+		callback(null);
+	}
+	} catch (e){
+		console.log(e);
+	}
     });
   } else {
     callback(null);
   }
 }
-this.getFromGraph(process.argv[2], function(id){console.log(id)});
 module.exports = this;
