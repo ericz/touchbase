@@ -72,7 +72,7 @@ app.get('/settings', loggedIn, function(req, res){
   
   var code = req.query.code;
   if(code) {
-    restler.get('https://graph.facebook.com/oauth/access_token?client_id=254026524706355&redirect_uri=http://localhost/settings&client_secret=65c4a1c6aa3fd9bc22872f5157244872&code='+code).on('complete', function(result) {
+    restler.get('https://graph.facebook.com/oauth/access_token?client_id=254026524706355&redirect_uri=http://writebetterwith.us/settings&client_secret=65c4a1c6aa3fd9bc22872f5157244872&code='+code).on('complete', function(result) {
       if (!(result instanceof Error)){
         result = qs.parse(result);
         Users.updateById(req.session.user._id, {$set: {fb_token: result.access_token}});
@@ -162,7 +162,7 @@ app.post('/register',
         doc._id = doc._id.toString();
         req.session.user = doc;
         res.redirect('/dashboard');
-        var html = '<p>Hi '+user.name+',</p><p>Thanks for signing up for TouchBase!</p><p>Your account is all set up and ready to use. <a href="http://localhost/dashboard">Start now</a>.</p><p>The TouchBase team</p>';
+        var html = '<p>Hi,</p><p>Thanks for signing up for TouchBase!</p><p>Your account is all set up and ready to use. <a href="http://localhost/dashboard">Start now</a>.</p><p>The TouchBase team</p>';
         util.email(user.email, 'Thanks for using TouchBase', html);
       }
     });
