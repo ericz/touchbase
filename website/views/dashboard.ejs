@@ -9,7 +9,7 @@
   <% for (var i = 0, ii = docs.length; i < ii; i++) { %>
   <% var doc = docs[i]; %>
   <div class="contactthumb" style="background-image: url(http://graph.facebook.com/<%=doc.fbid||1%>/picture?type=large)">
-    <div class="contactdata"><%=JSON.stringify(doc.last)%></div>
+    <div class="contactdata"><%=doc.last.date.toString()%></div>
     <div class="contactname"><%=doc.name%></div>
   </div>
   <% } %>
