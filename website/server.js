@@ -136,7 +136,7 @@ app.post('/remoteLogin',
     }
     Users.findOne({email: req.form.email}, function(err, doc){
       if(!doc || hash.sha256(req.form.password, doc.salt) !== doc.password) {
-        res.render({message: 'Incorrect email and password combination'});
+        res.send({message: 'Incorrect email and password combination'});
       } else {
         res.send({userId: doc._id.toString()});
       }
