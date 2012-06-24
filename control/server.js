@@ -85,6 +85,7 @@ app.post('/:user/addData' , function(req, res){
       if(doc != null) {
         datum.contactid = doc._id.toString();
         datum.userid = req.params.user;
+        console.log(datum.date);
         toInsert.push(datum);
       }
       cb(null);
@@ -97,7 +98,6 @@ app.post('/:user/addData' , function(req, res){
     } else if (datum.type === 'text') {
       db.collection('contacts').findOne({userid: req.params.user, phones: datum.phone}, setcontact);
     } else if (datum.type === 'fb') {
-      console.log({userid: req.params.user, fbid: datum.fbid});
       db.collection('contacts').findOne({userid: req.params.user, fbid: datum.fbid}, setcontact);
     } 
   }, function(){
