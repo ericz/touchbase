@@ -81,9 +81,11 @@ app.post('/:user/addData' , function(req, res){
   async.forEach(data, function(datum, cb){
     var setcontact = function(err, doc){
       console.log(0);
-      datum.contactid = doc._id.toString();
-      datum.userid = req.params.user;
-      toInsert.push(datum);
+      if(doc != null) {
+        datum.contactid = doc._id.toString();
+        datum.userid = req.params.user;
+        toInsert.push(datum);
+      }
       cb(null);
     };
     if(datum.type === 'gmail') {
