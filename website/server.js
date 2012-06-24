@@ -79,7 +79,7 @@ app.get('/settings', loggedIn, function(req, res){
       if (!(result instanceof Error)){
         result = qs.parse(result);
         restler.get('https://graph.facebook.com/me?access_token='+result.access_token).on('complete', function(graphresult) {
-          console.log('graphresult', graphresult);
+          graphresult = JSON.parse(graphresult);
           Users.updateById(req.session.user._id, {$set: {fb_token: result.access_token, fb_id: graphresult.id, name: graphresult.name}});
           
           if(req.session.user.fb_token !== result.access_token) {
