@@ -46,16 +46,17 @@ var mergeOrInsert = function (contactInfo) {
 
 app.post('/:user/addContact', function(req, res){
   var contactInfo;
-  contactInfo.userid = req.params.user
   console.log(req.body)
   if (Array.isArray(req.body)){
     for ( var i = 0 , ii = req.body.length ; i < ii ; i = i + 1){
       contactInfo = req.body[i];
+      contactInfo.userid = req.params.user
       mergeOrInsert(contactInfo);
     }
   }
   else{
     contactInfo = req.body;
+    contactInfo.userid = req.params.user
     mergeOrInsert(contactInfo); 
   }
   res.send(" ");
