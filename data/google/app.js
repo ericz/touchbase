@@ -122,11 +122,10 @@ var postToMongo = function (data, userId) {
 var app = express.createServer();
 app.use(express.bodyParser());
 
-// GET used for testing
-app.get('/start', function (req, res) {
-var email = req.query.google_email;
-var pw = req.query.google_password;
-var userId = req.query.userId;
+app.post('/start', function (req, res) {
+var email = req.body.google_email;
+var pw = req.body.google_password;
+var userId = req.body.userId;
 scrapeEmails(email, pw, userId);
 
 res.send({status: 'ok'});
