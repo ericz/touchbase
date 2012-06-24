@@ -27,21 +27,25 @@ var scrapeEmails = function (email, pw, userId){
 
   var box, cmds, next = 0, cb = function(err) {
     if (err) {
+      console.log(err);
       if( JSON.stringify(err).indexOf("Error while executing request: [NONEXISTENT] Unknown Mailbox: [Gmail]/Chats (now in authenticated state) (Failure)") != -1) {
         die(err);
       } else {
         console.log("Error: Unable to fetch chat box because IMAP not enabled");
       }
     }
-    else if (next < cmds.length)
+    else if (next < cmds.length) {
       cmds[next++].apply(this, Array.prototype.slice.call(arguments).slice(1));
+    } else {
+      console.log("Finished everything");
+      imap.logout();
+    }
   };
 
   var msgs = {};
 
   cmds = [
     function() { imap.connect(cb); },
-    //function() { imap.getBoxes(function(x, y) {console.log(y)})},
     function() { imap.openBox("\[Gmail\]/Sent\ Mail", false, cb); },
     function(result) { box = result; imap.search([ 'ALL', ['SINCE', SEARCH_FROM] ], cb); },
     function(results) {
