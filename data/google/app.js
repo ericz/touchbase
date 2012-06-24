@@ -101,7 +101,7 @@ var postToMongo = function (data, userId) {
     type: "gmail",
     data: data
   }).on('complete', function(e, res) {
-    console.log(e, res);
+    console.log('Done posting to mongo');
   });
 }
 
