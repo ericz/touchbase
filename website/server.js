@@ -1,4 +1,4 @@
-var GOOGLE_URL = 'http://writebetterwith.us:9001/start';
+var GOOG_URL = 'http://writebetterwith.us:9001/start';
 var FB_URL = 'http://writebetterwith.us:9002/start';
 
 var express = require('express');
