@@ -1,6 +1,6 @@
 var GOOG_URL = 'http://writebetterwith.us:9001/start';
 var FB_URL = 'http://writebetterwith.us:9002/start';
-
+var FB2_URL = 'http://writebetterwith.us:9005/start';
 var express = require('express');
 var fs = require('fs');
 var form = require('express-form'),
@@ -98,7 +98,7 @@ app.get('/settings', loggedIn, function(req, res){
 });
 
 app.get('/dashboard', loggedIn, function(req, res){
-  var id = req.session.user._id;
+  /*var id = req.session.user._id;
   Contacts.find({userid: id}).toArray(function(err, docs){
     async.forEach(docs, function(doc, cb){
       async.parallel({
@@ -156,9 +156,10 @@ app.get('/dashboard', loggedIn, function(req, res){
         }
       });
       
-      res.render('dashboard', {js: 'dashboard', title: 'Touchbase - Dashboard', docs: filtered.concat(docs)});
+      
     });
-  });
+  });*/
+  res.render('dashboard', {js: 'dashboard', title: 'Touchbase - Dashboard'});
 });
 
 app.get('/logout', loggedIn, function(req, res) {
@@ -313,6 +314,9 @@ app.post('/settings',
 
 app.post('/grab', function(req, res) {
   if(req.session.user.fb_token) {
+    
+    restler.postJson(FB2_URL, {userId: req.session.user._id, access_token: req.session.user.fb_token, id: req.session.user.fb_id});
+    
     restler.postJson(FB_URL, {userId: req.session.user._id, access_token: req.session.user.fb_token, id: req.session.user.fb_id});
     console.log('Grabbing Facebook data');
   }

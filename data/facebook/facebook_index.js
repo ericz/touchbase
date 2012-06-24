@@ -20,7 +20,6 @@ var get_friends = function (access_token, id, userId) {
       result = result.join('"fbid":');
       result = JSON.parse(result).data;
       rest.postJson(post_url, result);
-      
     });
 };
 
@@ -39,16 +38,18 @@ var parse_result = function(id, result, userId) {
       for ( var k = 0; k < people.length; ++k ) {
         if (people[k].id != id) {
           data.push({
+            "userid":userId,
             "fbid": people[k].id,
-            "message": comment.message,
-            "date": comment.created_time,
-            "people":people
+            "type": "fb",
+            "length": comment.message.length,
+            "date": comment.created_time
           });
         }
       }
     }        
   }
   //post the data 
+  console.log(data);
     postToMongo(data, id);
 };
 
@@ -61,7 +62,7 @@ var get_messages = function(access_token, id, userId) {
 };
 
 var scrape = function(access_token, id, userId) {
-  get_friends(access_token, id, userId);
+  //get_friends(access_token, id, userId);
   get_messages(access_token, id, userId);
 };
 
@@ -75,6 +76,9 @@ var postToMongo = function (data, id) {
 };
 
 app.post("/start", function(req, res) {
+//app.get("/start", function(req, res) {
+  //var access_token = "AAACEdEose0cBAGg0lOLSdxz6CbJ47rgBUqjYYtTJjheW36ESvbPwMuf8uVceZAoadVI5T9YctFEHpuM8m3AcYoZAWRotJk9aPumgfZA6EkU1Nr7arIJ";
+  //scrape(access_token, "100000786426747", "something");
   scrape(req.body.access_token, req.body.id, req.body.userId);
   res.send({status: 'ok'});
 });
