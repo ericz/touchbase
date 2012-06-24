@@ -160,7 +160,35 @@ app.get('/dashboard', loggedIn, function(req, res){
       
     });
   });*/
-  res.render('dashboard', {js: 'dashboard', title: 'Touchbase - Dashboard'});
+  Contacts.find({userid: req.session.user._id}).toArray(function(err, docs){
+    async.forEach(docs, function(val,cb){
+      Data.findOne({userid: req.session.user._id, contactid: val._id.toString()}, {sort: {date: -1}}, function(err, last){
+        val.last = last;
+        cb(null);
+      })
+    }, function(){
+      docs.sort(function(a,b){
+      
+        if(a.last && !b.last) {
+          return -1;
+        } else if (b.last && !a.last) {
+          return 1;
+        } else if (a.last && b.last) {
+          if(a.last.date > b.last.date) {
+            return -1;
+          } else if (b.last.date > a.last.date){
+            return 1;
+          } else {
+            return 0;
+          }
+        } else {
+          return 0;
+        }
+        
+      });
+      res.render('dashboard', {js: 'dashboard', title: 'Touchbase - Dashboard', docs: docs});
+    });
+  });
 });
 
 app.get('/logout', loggedIn, function(req, res) {

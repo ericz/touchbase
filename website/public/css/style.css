@@ -668,6 +668,7 @@ h2 {
   background-size: cover;
   position: relative;
   float: left;
+  display: block;
   margin: 0 2px 2px 0;
 }
 

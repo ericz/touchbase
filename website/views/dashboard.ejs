@@ -4,8 +4,14 @@
   
   <%-partial('usermenu.ejs')%>
   <div id="main-alt" class="main-large">
-  <h1></h1>
+  <h1>My contacts</h1>
+ <% for (var i =0, ii = docs.length; i < ii; i++) { %>
+ <% var doc = docs[i] %>
  
+ <a href="/contact/<%=doc._id.toString()%>" class="contactthumb" style="background-image:url(http://graph.facebook.com/<%=doc.fbid%>/picture?type=large)">
+    <div class="contactname"><%=doc.name%></div>
+ </a>
+ <% } %>
   
   <div class="clear"></div>
  

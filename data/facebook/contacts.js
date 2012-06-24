@@ -18,7 +18,7 @@ var get_friends = function (access_token, id, userId) {
       // and less dependent on the format of the text
       result = result.split('"id":');
       result = result.join('"fbid":');
-      result = JSON.parse(result).data;
+      result = JSON.parse(result).data;-
       rest.postJson(post_url, result);
     });
 };

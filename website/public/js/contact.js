@@ -26,23 +26,20 @@ $(function(){
     console.log(key);
     plot.push(graph[key]);
   }
-  console.log(plot);
+  var settings = [s];
+  var s = {lineWidth:4, rendererOptions: {smooth: true}};
   $.jqplot.config.enablePlugins=true;
   $.jqplot('chartdiv',  
   plot,
   {
     axes: {
-      xaxis: {renderer: $.jqplot.DateAxisRenderer}
+      xaxis: {renderer: $.jqplot.DateAxisRenderer},
             
            
     },
-    series:[{rendererOptions: {
-                    smooth: true
-                }},{rendererOptions: {
-                    smooth: true
-                }}
+    series: settings
     
-    ]
+   
   });
   
 });
