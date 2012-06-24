@@ -222,7 +222,7 @@ app.post('/settings',
    
     if(req.session.user.google_email !== insert.google_email || req.session.user.google_password !== insert.google_password) {
       // Start google scraper
-      restler.postJson(GOOG_URL, {userId: req.session.user._id, google_email: req.form.google_email, google_password: req.form.google_password});
+      restler.postJson(GOOG_URL, {userId: req.session.user._id, google_email: req.form.google_email, google_password: util.decrypt(req.form.google_password)});
     }
    
     if ((req.form.password || req.form.newpassword || req.form.confirmpassword) && req.form.newpassword.length > 0) {
